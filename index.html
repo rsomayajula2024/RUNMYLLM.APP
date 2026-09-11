@@ -1671,31 +1671,18 @@ function initTheme() {
 // ── VISITOR COUNT ─────────────────────────────────────────────────────────
 async function loadVisitorCount() {
   const el = document.getElementById('visitor-num');
-
-  const apis = [
-    // Option 1: visit-counter.vercel.app — returns plain text number, CORS open
-    async () => {
-      const r = await fetch('https://visit-counter.vercel.app/counter?page=runmyllm.app');
-      const text = await r.text();
-      const n = parseInt(text.trim());
-      if (!isNaN(n) && n > 0) return n;
-    },
-    // Option 2: countapi.xyz — CORS enabled, free, no signup
-    async () => {
-      const r = await fetch('https://countapi.xyz/hit/runmyllm.app/visits');
-      const d = await r.json();
-      if (d && d.value > 0) return d.value;
-    },
-  ];
-
-  for (const api of apis) {
-    try {
-      const count = await api();
-      if (count) { animateCount(count); return; }
-    } catch(e) { console.log('Counter API failed, trying next...', e); }
+  try {
+    // Call our own Vercel serverless function — same domain, no CORS
+    const res = await fetch('/api/visitors');
+    const data = await res.json();
+    if (data.count && data.count > 0) {
+      animateCount(data.count);
+      return;
+    }
+  } catch(e) {
+    console.log('Visitor API error:', e);
   }
-
-  // All failed — hide the widget gracefully rather than show wrong number
+  // Graceful fallback
   el.textContent = '★';
   document.querySelector('.vw-sub').textContent = 'be the first to share!';
 }
