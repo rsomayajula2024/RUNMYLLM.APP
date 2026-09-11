@@ -1344,6 +1344,15 @@ function applyDetectedHardware(info) {
   compute();
 }
 
+function toggleFailGroup() {
+  const el  = document.getElementById('group-fail');
+  const chev = document.getElementById('fail-chevron');
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
 function backToGrid() {
   document.getElementById('model').value = '';
   state.modelIdx = null;
@@ -1703,16 +1712,39 @@ function renderGrid(panel, models, ram) {
     ['run','warn','fail'].forEach(key => {
       if (!groups[key].length) return;
       const cfg = groupConfig[key];
-      html += `<div style="margin-bottom:20px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)">
-          <span style="font-size:13px;font-weight:600;color:${cfg.color}">${cfg.label}</span>
-          <span style="font-size:11px;color:var(--text-muted)">${cfg.sub}</span>
-          <span style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--text-muted)">${groups[key].length} model${groups[key].length>1?'s':''}</span>
-        </div>
-        <div class="models-grid">
-          ${groups[key].map(({m, tot, v}) => modelCard(m, tot, v, ram)).join('')}
-        </div>
-      </div>`;
+      const isCollapsible = key === 'fail';
+      const collapseId = 'group-fail';
+
+      if (isCollapsible) {
+        html += `<div style="margin-bottom:20px">
+          <div
+            style="display:flex;align-items:center;gap:10px;margin-bottom:0;padding:10px 14px;border:1px solid var(--border);border-radius:9px;cursor:pointer;background:var(--surface);user-select:none"
+            onclick="toggleFailGroup()"
+            id="fail-header"
+          >
+            <span style="font-size:13px;font-weight:600;color:${cfg.color}">${cfg.label}</span>
+            <span style="font-size:11px;color:var(--text-muted)">${cfg.sub}</span>
+            <span style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--text-muted)">${groups[key].length} model${groups[key].length>1?'s':''}</span>
+            <span id="fail-chevron" style="color:var(--text-muted);font-size:12px;margin-left:6px;transition:transform .2s">▼</span>
+          </div>
+          <div id="${collapseId}" style="display:none;margin-top:10px">
+            <div class="models-grid">
+              ${groups[key].map(({m, tot, v}) => modelCard(m, tot, v, ram)).join('')}
+            </div>
+          </div>
+        </div>`;
+      } else {
+        html += `<div style="margin-bottom:20px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)">
+            <span style="font-size:13px;font-weight:600;color:${cfg.color}">${cfg.label}</span>
+            <span style="font-size:11px;color:var(--text-muted)">${cfg.sub}</span>
+            <span style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--text-muted)">${groups[key].length} model${groups[key].length>1?'s':''}</span>
+          </div>
+          <div class="models-grid">
+            ${groups[key].map(({m, tot, v}) => modelCard(m, tot, v, ram)).join('')}
+          </div>
+        </div>`;
+      }
     });
 
     html += `<div style="font-size:12px;color:var(--text-muted);margin-top:4px">Click any card for full memory breakdown and run command.</div>`;
