@@ -1089,7 +1089,13 @@ footer a:hover { color: var(--cyan); }
       <div class="vw-body">
         <div class="vw-label">nerds visited</div>
         <div class="vw-count">
-          <span id="visitor-num" class="vw-num">—</span>
+          <img 
+            src="https://hits.sh/runmyllm.app.svg?style=flat-square&label=&color=transparent&labelColor=transparent"
+            alt="visitor count"
+            id="hits-badge"
+            style="max-width:100px;height:32px;filter:invert(0)"
+            onerror="this.style.display='none'; document.getElementById('visitor-num').style.display='block'">
+          <span id="visitor-num" class="vw-num" style="display:none">—</span>
         </div>
         <div class="vw-sub">and counting 🚀</div>
       </div>
@@ -1670,21 +1676,31 @@ function initTheme() {
 
 // ── VISITOR COUNT ─────────────────────────────────────────────────────────
 async function loadVisitorCount() {
-  const el = document.getElementById('visitor-num');
+  const numEl = document.getElementById('visitor-num');
+  const badgeEl = document.getElementById('hits-badge');
+
   try {
-    // Call our own Vercel serverless function — same domain, no CORS
     const res = await fetch('/api/visitors');
     const data = await res.json();
     if (data.count && data.count > 0) {
-      animateCount(data.count);
+      // Show the number with animation
+      if (badgeEl) badgeEl.style.display = 'none';
+      if (numEl) { numEl.style.display = 'block'; animateCount(data.count); }
       return;
     }
-  } catch(e) {
-    console.log('Visitor API error:', e);
+  } catch(e) {}
+
+  // Fallback: hits.sh badge renders as image — always works, shows real count
+  // Badge is already visible as <img> — just make sure it's shown
+  if (badgeEl) {
+    badgeEl.style.display = 'block';
+    // Style the badge to look big and readable
+    badgeEl.style.height = '36px';
+    badgeEl.style.width = 'auto';
+    badgeEl.style.maxWidth = '120px';
+    badgeEl.style.borderRadius = '6px';
   }
-  // Graceful fallback
-  el.textContent = '★';
-  document.querySelector('.vw-sub').textContent = 'be the first to share!';
+  if (numEl) numEl.style.display = 'none';
 }
 
 function animateCount(target) {
