@@ -38,6 +38,92 @@
   --display:   'Space Grotesk', sans-serif;
 }
 
+/* ── LIGHT MODE ── */
+body.light {
+  --bg:        #f0f4f8;
+  --surface:   #ffffff;
+  --surface2:  #e8edf5;
+  --surface3:  #dde4ef;
+  --border:    #c8d3e8;
+  --border2:   #b8c5dc;
+  --cyan:      #0891b2;
+  --cyan-glow: rgba(8,145,178,.12);
+  --cyan-dim:  #e0f2fe;
+  --green:     #059669;
+  --green-dim: #d1fae5;
+  --amber:     #d97706;
+  --amber-dim: #fef3c7;
+  --red:       #dc2626;
+  --red-dim:   #fee2e2;
+  --violet:    #7c3aed;
+  --text:      #0f172a;
+  --text-muted:#64748b;
+  --text-dim:  #334155;
+}
+body.light .starfield { display: none; }
+body.light header { background: rgba(255,255,255,.95); }
+body.light .hero { background: linear-gradient(180deg, #e0f2fe 0%, #f0f4f8 100%); }
+body.light .visitor-widget {
+  background: linear-gradient(135deg, #e0f2fe, #dbeafe);
+  border-color: rgba(8,145,178,.3);
+  box-shadow: 0 4px 24px rgba(8,145,178,.1);
+}
+body.light .vw-num { text-shadow: none; }
+body.light .panel-left { background: #ffffff; }
+body.light .panel-right { background: #f0f4f8; }
+body.light select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%2364748b' d='M5 6L0 0h10z'/%3E%3C/svg%3E"); }
+body.light .detect-btn { background: linear-gradient(135deg, rgba(8,145,178,.1), rgba(124,58,237,.1)); }
+body.light .mem-track { background: var(--surface2); }
+body.light .breakdown { background: var(--surface); }
+body.light .bd-row.total { background: var(--surface2); }
+body.light .dl-panel { background: var(--surface); }
+body.light .code-block { background: var(--surface2); color: var(--cyan); }
+body.light .mcard { background: var(--surface); }
+body.light .ticker-item:hover { background: var(--surface2); }
+
+/* THEME TOGGLE */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.ttog {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--display);
+  transition: all .2s;
+  white-space: nowrap;
+}
+.ttog.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 4px rgba(0,0,0,.2);
+}
+body.light .ttog.active {
+  background: var(--cyan);
+  color: white;
+  box-shadow: 0 1px 4px rgba(8,145,178,.3);
+}
+body.light .theme-toggle {
+  background: var(--surface2);
+  border-color: var(--border);
+}
+body.light .ttog { color: var(--text-muted); }
+
 body {
   font-family: var(--display);
   background: var(--bg);
@@ -105,7 +191,10 @@ header {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
 .updated-badge {
   font-family: var(--mono);
@@ -968,6 +1057,15 @@ footer a:hover { color: var(--cyan); }
   </a>
   <div class="header-right">
     <div class="updated-badge">Updated <span id="last-updated">—</span></div>
+    <div style="display:flex;align-items:center;gap:5px;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);border-radius:20px;padding:3px 10px;">
+      <span style="width:7px;height:7px;background:var(--green);border-radius:50%;display:inline-block;animation:widgetPulse 2s ease-in-out infinite"></span>
+      <span style="font-size:11px;font-weight:600;color:var(--green);letter-spacing:.02em">Refreshed every week</span>
+    </div>
+    <!-- THEME TOGGLE -->
+    <div class="theme-toggle">
+      <button class="ttog active" id="ttog-dark" onclick="setTheme('dark')">🌙 Dark</button>
+      <button class="ttog" id="ttog-light" onclick="setTheme('light')">☀️ Light</button>
+    </div>
     <a href="https://github.com/rsomayajula2024/RUNMYLLM.APP" target="_blank" style="color:var(--text-muted);text-decoration:none;font-size:12px;">★ GitHub</a>
   </div>
 </header>
@@ -987,14 +1085,10 @@ footer a:hover { color: var(--cyan); }
     <div class="visitor-widget">
       <div class="vw-avatar">🤖</div>
       <div class="vw-pulse"></div>
+      <img src="https://hits.sh/runmyllm.app.svg" style="display:none" alt="">
       <div class="vw-body">
         <div class="vw-label">nerds visited</div>
         <div class="vw-count">
-          <img src="https://hits.sh/runmyllm.app.svg?style=flat-square&label=&color=0a1628&labelColor=0a1628&style=flat"
-               alt="visitors"
-               id="hit-badge"
-               style="height:0;width:0;opacity:0;position:absolute"
-               onload="extractCount(this)">
           <span id="visitor-num" class="vw-num">—</span>
         </div>
         <div class="vw-sub">and counting 🚀</div>
@@ -1005,6 +1099,10 @@ footer a:hover { color: var(--cyan); }
   <!-- COMPANY TICKER -->
   <div class="ticker-wrap" id="ticker-wrap">
     <div class="ticker-track" id="ticker"></div>
+  </div>
+  <div style="margin-top:12px;font-size:12px;color:var(--text-muted);display:flex;align-items:center;justify-content:center;gap:8px">
+    <span style="width:6px;height:6px;background:var(--green);border-radius:50%;display:inline-block;animation:widgetPulse 2s ease-in-out infinite;flex-shrink:0"></span>
+    <span><strong style="color:var(--text-dim)">Model list refreshed every Monday</strong> — new releases appear automatically</span>
   </div>
 </section>
 
@@ -1280,6 +1378,7 @@ async function boot() {
   populateModels();
   compute();
   loadVisitorCount();
+  initTheme();
 }
 
 // ── HARDWARE DETECTION ────────────────────────────────────────────────────
@@ -1556,45 +1655,67 @@ function resetAll() {
   compute();
 }
 
+// ── THEME ─────────────────────────────────────────────────────────────────
+function setTheme(theme) {
+  document.body.classList.toggle('light', theme === 'light');
+  document.getElementById('ttog-dark').classList.toggle('active', theme === 'dark');
+  document.getElementById('ttog-light').classList.toggle('active', theme === 'light');
+  localStorage.setItem('runmyllm-theme', theme);
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('runmyllm-theme');
+  if (saved === 'light') setTheme('light');
+}
+
 // ── VISITOR COUNT ─────────────────────────────────────────────────────────
 async function loadVisitorCount() {
-  try {
-    const res = await fetch('https://hits.sh/runmyllm.app.svg');
-    const svg = await res.text();
-    // Extract the number from the SVG text content
-    const matches = svg.match(/>(\d[\d,]*)</g);
-    if (matches) {
-      // Last number in the SVG is usually the count
-      const nums = matches.map(m => m.replace(/[><,]/g,'').trim()).filter(n => /^\d+$/.test(n));
-      if (nums.length) {
-        const count = parseInt(nums[nums.length-1]);
-        animateCount(count);
-        return;
-      }
-    }
-  } catch(e) {}
-  // Fallback — just show dashes
-  document.getElementById('visitor-num').textContent = '—';
+  const el = document.getElementById('visitor-num');
+
+  const apis = [
+    // Option 1: visit-counter.vercel.app — returns plain text number, CORS open
+    async () => {
+      const r = await fetch('https://visit-counter.vercel.app/counter?page=runmyllm.app');
+      const text = await r.text();
+      const n = parseInt(text.trim());
+      if (!isNaN(n) && n > 0) return n;
+    },
+    // Option 2: countapi.xyz — CORS enabled, free, no signup
+    async () => {
+      const r = await fetch('https://countapi.xyz/hit/runmyllm.app/visits');
+      const d = await r.json();
+      if (d && d.value > 0) return d.value;
+    },
+  ];
+
+  for (const api of apis) {
+    try {
+      const count = await api();
+      if (count) { animateCount(count); return; }
+    } catch(e) { console.log('Counter API failed, trying next...', e); }
+  }
+
+  // All failed — hide the widget gracefully rather than show wrong number
+  el.textContent = '★';
+  document.querySelector('.vw-sub').textContent = 'be the first to share!';
 }
 
 function animateCount(target) {
   const el = document.getElementById('visitor-num');
   if (!el) return;
-  const duration = 1200;
+  const duration = 1600;
   const start = Date.now();
-  const startVal = 0;
   function tick() {
     const elapsed = Date.now() - start;
     const progress = Math.min(elapsed / duration, 1);
     const eased = 1 - Math.pow(1 - progress, 3);
-    const current = Math.round(startVal + (target - startVal) * eased);
-    el.textContent = current.toLocaleString();
+    el.textContent = Math.round(target * eased).toLocaleString();
     if (progress < 1) requestAnimationFrame(tick);
   }
   tick();
 }
 
-function extractCount(img) {} // kept for compat
+function extractCount(img) {}
 
 // ── STARS ─────────────────────────────────────────────────────────────────
 function buildStars() {
