@@ -824,6 +824,16 @@ footer a:hover { color: var(--cyan); }
   background: var(--border);
 }
 
+/* PULSE HIGHLIGHT for missing fields */
+@keyframes fieldPulse {
+  0%,100% { border-color: var(--border); box-shadow: none; }
+  50% { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(251,191,36,.15); }
+}
+.field-missing select {
+  animation: fieldPulse 1.5s ease-in-out 3;
+  border-color: var(--amber);
+}
+
 /* RESET BUTTON */
 .reset-btn {
   width: 100%;
@@ -924,6 +934,11 @@ footer a:hover { color: var(--cyan); }
       </div>
     </div>
 
+    <!-- Reset — always visible at top -->
+    <div>
+      <button class="reset-btn" onclick="resetAll()">↺ Reset all filters</button>
+    </div>
+
     <!-- Auto-detect -->
     <div>
       <div class="pane-title">Hardware</div>
@@ -961,7 +976,7 @@ footer a:hover { color: var(--cyan); }
       </div>
       <div class="field">
         <label>RAM / VRAM</label>
-        <select id="ram" onchange="compute()">
+        <select id="ram" onchange="state.ram=parseFloat(this.value)||0; compute()">
           <option value="">— Select memory —</option>
         </select>
       </div>
@@ -1020,11 +1035,6 @@ footer a:hover { color: var(--cyan); }
         <input type="range" id="ctx-slider" min="0" max="6" step="1" value="2" oninput="setCtx(this.value)">
         <span class="slider-val" id="ctx-val">4K</span>
       </div>
-    </div>
-
-    <!-- Reset -->
-    <div>
-      <button class="reset-btn" onclick="resetAll()">↺ Reset all filters</button>
     </div>
 
   </div>
@@ -1208,10 +1218,27 @@ function showDetectResult(info) {
   document.getElementById('dr-platform').textContent = info.isMac ? 'macOS' : info.isWin ? 'Windows' : info.isLinux ? 'Linux' : info.isMobile ? 'Mobile' : 'Unknown';
 
   const warn = document.getElementById('dr-warn');
-  if (!info.gpuString) {
-    warn.textContent = '⚠ GPU info blocked by your browser — please set manually.';
+  const missingFields = [];
+  if (!document.getElementById('brand').value)  missingFields.push('Brand / Platform');
+  if (!document.getElementById('chip').value)   missingFields.push('Chip / GPU');
+  if (!document.getElementById('ram').value)    missingFields.push('RAM / VRAM');
+
+  if (missingFields.length) {
+    warn.innerHTML = `⚠ Browser couldn't auto-fill all fields.<br>
+      <strong style="color:var(--text)">Please select manually:</strong>
+      ${missingFields.map(f => `<span style="display:inline-block;margin-top:4px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:var(--amber);font-size:11px;padding:2px 8px;border-radius:4px;margin-right:4px">→ ${f}</span>`).join('')}`;
+    // Pulse the first missing dropdown
+    const ids = { 'Brand / Platform':'brand', 'Chip / GPU':'chip', 'RAM / VRAM':'ram' };
+    missingFields.forEach(f => {
+      const el = document.getElementById(ids[f]);
+      if (el) {
+        el.closest('.field')?.classList.add('field-missing');
+        // Remove after animation completes
+        setTimeout(() => el.closest('.field')?.classList.remove('field-missing'), 5000);
+      }
+    });
   } else if (info.ramGB && info.ramGB <= 8) {
-    warn.textContent = '⚠ Browser caps RAM reporting at 8 GB — verify actual memory below.';
+    warn.textContent = '⚠ Browser caps RAM at 8 GB — verify actual memory in the RAM dropdown.';
   } else {
     warn.textContent = '';
   }
@@ -1299,20 +1326,22 @@ function applyDetectedHardware(info) {
     if (ramOptions.length) bestRam = ramOptions[0];
   }
 
-  // ── FALLBACK CPU ──
+  // ── FALLBACK CPU — also catches ANGLE wrappers (Windows integrated GPU) ──
   else {
     brand='generic';
     chipVal='cpu_ddr5';
-    ramOptions=[16,32,64,128];
-    bestRam = info.ramGB ? Math.max(8, Math.min(128, info.ramGB)) : 16;
+    // Try to use deviceMemory, otherwise default to 16
+    const detectedRam = info.ramGB ? Math.max(8, Math.min(128, info.ramGB * 2)) : 16;
+    // Common RAM sizes: pick nearest standard
+    const standardSizes = [8,16,32,64,128];
+    bestRam = standardSizes.reduce((a,b) => Math.abs(b-detectedRam) < Math.abs(a-detectedRam) ? b : a);
+    ramOptions = [8,16,32,64,128];
   }
 
-  if (!brand) return; // couldn't identify — leave dropdowns alone
+  if (!brand) return;
 
   // ── APPLY TO UI ──
-  // Device type
-  const isMobile = info.isMobile;
-  const deviceType = isMobile ? 'laptop' : (info.isWin || info.isLinux) ? 'desktop' : 'laptop';
+  const deviceType = info.isMobile ? 'laptop' : (info.isWin || info.isLinux) ? 'desktop' : 'laptop';
   setDevice(deviceType);
 
   // Brand
@@ -1335,10 +1364,10 @@ function applyDetectedHardware(info) {
   ramSel.innerHTML = '<option value="">— Select memory —</option>';
   ramOptions.forEach(gb => ramSel.appendChild(new Option(`${gb} GB`, gb)));
 
-  // Select best RAM
+  // Select best RAM — CRITICAL: set both the select value AND state.ram as a number
   if (bestRam) {
     ramSel.value = bestRam;
-    state.ram = bestRam;
+    state.ram = parseFloat(bestRam);
   }
 
   compute();
@@ -1522,9 +1551,14 @@ function ctxLabel(ctx)          { return ctx>=1000?Math.round(ctx/1024)+'K':ctx.
 
 // ── COMPUTE / RENDER ──────────────────────────────────────────────────────
 function compute() {
-  const ram  = parseFloat(document.getElementById('ram').value)||0;
-  const midx = document.getElementById('model').value;
-  const filt = filtered();
+  // Use state.ram as source of truth (set by both dropdown and auto-detect)
+  const ramFromSelect = parseFloat(document.getElementById('ram').value) || 0;
+  const ram = state.ram || ramFromSelect;
+  // Keep select in sync
+  if (ram && !ramFromSelect) document.getElementById('ram').value = ram;
+
+  const midx  = document.getElementById('model').value;
+  const filt  = filtered();
   const model = (midx !== '' && filt[midx]) ? filt[parseInt(midx)] : null;
   const panel = document.getElementById('right-panel');
 
