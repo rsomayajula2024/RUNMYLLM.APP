@@ -870,6 +870,80 @@ footer a:hover { color: var(--cyan); }
 }
 .back-btn:hover { border-color: var(--cyan); color: var(--cyan); }
 
+/* HERO BODY */
+.hero-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 48px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+.hero-text { text-align: center; }
+.hero-text h1 { margin-bottom: 14px; }
+.hero-text .hero-sub { margin-bottom: 0; }
+
+/* VISITOR WIDGET */
+.visitor-widget {
+  position: relative;
+  background: linear-gradient(135deg, #0e1a2e, #0d2a36);
+  border: 1px solid rgba(34,211,238,.2);
+  border-radius: 20px;
+  padding: 20px 24px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 140px;
+  box-shadow: 0 0 40px rgba(34,211,238,.08), inset 0 1px 0 rgba(255,255,255,.05);
+  flex-shrink: 0;
+}
+.vw-pulse {
+  position: absolute;
+  inset: -1px;
+  border-radius: 20px;
+  border: 1px solid var(--cyan);
+  opacity: 0;
+  animation: widgetPulse 3s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes widgetPulse {
+  0%,100% { opacity: 0; transform: scale(1); }
+  50% { opacity: .3; transform: scale(1.02); }
+}
+.vw-avatar {
+  font-size: 36px;
+  margin-bottom: 4px;
+  animation: float 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(34,211,238,.4));
+}
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.vw-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.vw-num {
+  font-family: var(--mono);
+  font-size: 38px;
+  font-weight: 600;
+  color: var(--cyan);
+  line-height: 1.1;
+  text-shadow: 0 0 20px rgba(34,211,238,.4);
+  display: block;
+  text-align: center;
+  min-width: 80px;
+}
+.vw-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 /* GLOW LINES */
 .glow-line {
   position: absolute;
@@ -895,12 +969,6 @@ footer a:hover { color: var(--cyan); }
   <div class="header-right">
     <div class="updated-badge">Updated <span id="last-updated">—</span></div>
     <a href="https://github.com/rsomayajula2024/RUNMYLLM.APP" target="_blank" style="color:var(--text-muted);text-decoration:none;font-size:12px;">★ GitHub</a>
-    <a href="https://runmyllm.app" title="Visitor count" style="display:flex;align-items:center;gap:6px;text-decoration:none;margin-top:4px">
-      <img src="https://hits.sh/runmyllm.app.svg?style=flat-square&label=visitors&color=0d2a36&labelColor=1e2d4a&extraCount=0" 
-           alt="Visitors" 
-           style="height:26px;border-radius:5px;"
-           onerror="this.parentElement.style.display='none'">
-    </a>
   </div>
 </header>
 
@@ -908,8 +976,31 @@ footer a:hover { color: var(--cyan); }
 <section class="hero">
   <div class="glow-line" style="top:0"></div>
   <div class="hero-eyebrow">Local AI · Memory Calculator</div>
-  <h1>Will your LLM run<br>on <em>this</em> machine?</h1>
-  <p class="hero-sub">Pick any model, configure your hardware, and see exactly where the memory goes — in seconds.</p>
+
+  <div class="hero-body">
+    <div class="hero-text">
+      <h1>Will your LLM run<br>on <em>this</em> machine?</h1>
+      <p class="hero-sub">Pick any model, configure your hardware, and see exactly where the memory goes — in seconds.</p>
+    </div>
+
+    <!-- FUNKY VISITOR WIDGET -->
+    <div class="visitor-widget">
+      <div class="vw-avatar">🤖</div>
+      <div class="vw-pulse"></div>
+      <div class="vw-body">
+        <div class="vw-label">nerds visited</div>
+        <div class="vw-count">
+          <img src="https://hits.sh/runmyllm.app.svg?style=flat-square&label=&color=0a1628&labelColor=0a1628&style=flat"
+               alt="visitors"
+               id="hit-badge"
+               style="height:0;width:0;opacity:0;position:absolute"
+               onload="extractCount(this)">
+          <span id="visitor-num" class="vw-num">—</span>
+        </div>
+        <div class="vw-sub">and counting 🚀</div>
+      </div>
+    </div>
+  </div>
 
   <!-- COMPANY TICKER -->
   <div class="ticker-wrap" id="ticker-wrap">
@@ -1188,6 +1279,7 @@ async function boot() {
   buildTicker();
   populateModels();
   compute();
+  loadVisitorCount();
 }
 
 // ── HARDWARE DETECTION ────────────────────────────────────────────────────
@@ -1463,6 +1555,46 @@ function resetAll() {
   populateModels();
   compute();
 }
+
+// ── VISITOR COUNT ─────────────────────────────────────────────────────────
+async function loadVisitorCount() {
+  try {
+    const res = await fetch('https://hits.sh/runmyllm.app.svg');
+    const svg = await res.text();
+    // Extract the number from the SVG text content
+    const matches = svg.match(/>(\d[\d,]*)</g);
+    if (matches) {
+      // Last number in the SVG is usually the count
+      const nums = matches.map(m => m.replace(/[><,]/g,'').trim()).filter(n => /^\d+$/.test(n));
+      if (nums.length) {
+        const count = parseInt(nums[nums.length-1]);
+        animateCount(count);
+        return;
+      }
+    }
+  } catch(e) {}
+  // Fallback — just show dashes
+  document.getElementById('visitor-num').textContent = '—';
+}
+
+function animateCount(target) {
+  const el = document.getElementById('visitor-num');
+  if (!el) return;
+  const duration = 1200;
+  const start = Date.now();
+  const startVal = 0;
+  function tick() {
+    const elapsed = Date.now() - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = Math.round(startVal + (target - startVal) * eased);
+    el.textContent = current.toLocaleString();
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function extractCount(img) {} // kept for compat
 
 // ── STARS ─────────────────────────────────────────────────────────────────
 function buildStars() {
