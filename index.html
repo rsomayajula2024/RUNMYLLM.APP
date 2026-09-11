@@ -958,7 +958,19 @@ footer a:hover { color: var(--cyan); }
     <!-- Hardware dropdowns -->
     <div>
       <div class="field">
-        <label>Brand / Platform</label>
+        <label>
+          Brand / Platform
+          <span class="info-icon" style="display:inline-flex;vertical-align:middle;margin-left:4px">?
+            <div class="tooltip" style="width:240px">
+              <div class="tooltip-title">How to find your brand</div>
+              <div class="tooltip-body">
+                <strong>Windows:</strong> Press <code style="background:var(--surface3);padding:1px 5px;border-radius:3px">Win + R</code> → type <code style="background:var(--surface3);padding:1px 5px;border-radius:3px">dxdiag</code> → look for "Display" tab<br><br>
+                <strong>Mac:</strong> Apple menu → About This Mac → chip name shown at top<br><br>
+                <strong>Not sure?</strong> Use the ⚡ detect button above — it reads it automatically.
+              </div>
+            </div>
+          </span>
+        </label>
         <select id="brand" onchange="onBrandChange()">
           <option value="">— Select brand —</option>
           <option value="apple">Apple Silicon (M-series)</option>
@@ -969,13 +981,38 @@ footer a:hover { color: var(--cyan); }
         </select>
       </div>
       <div class="field">
-        <label>Chip / GPU</label>
+        <label>
+          Chip / GPU
+          <span class="info-icon" style="display:inline-flex;vertical-align:middle;margin-left:4px">?
+            <div class="tooltip" style="width:240px">
+              <div class="tooltip-title">How to find your GPU / chip</div>
+              <div class="tooltip-body">
+                <strong>Windows:</strong> Right-click Desktop → Display Settings → scroll to "Advanced display" — or Task Manager → Performance → GPU<br><br>
+                <strong>Mac:</strong> Apple menu → About This Mac → chip (e.g. M4 Pro)<br><br>
+                <strong>Gaming PC:</strong> Check the sticker on your GPU card, or the receipt/box.
+              </div>
+            </div>
+          </span>
+        </label>
         <select id="chip" onchange="onChipChange()">
           <option value="">— Select chip —</option>
         </select>
       </div>
       <div class="field">
-        <label>RAM / VRAM</label>
+        <label>
+          RAM / VRAM
+          <span class="info-icon" style="display:inline-flex;vertical-align:middle;margin-left:4px">?
+            <div class="tooltip" style="width:260px">
+              <div class="tooltip-title">RAM vs VRAM — which one?</div>
+              <div class="tooltip-body">
+                <strong>Apple Silicon (Mac):</strong> Use your total unified memory — shown in About This Mac (e.g. 24 GB)<br><br>
+                <strong>NVIDIA / AMD GPU:</strong> Use VRAM only — e.g. RTX 4090 = 24 GB VRAM. Check GPU box or Task Manager → GPU Memory<br><br>
+                <strong>CPU-only:</strong> Use total system RAM — Task Manager → Performance → Memory<br><br>
+                <strong>Windows shortcut:</strong> Press <code style="background:var(--surface3);padding:1px 5px;border-radius:3px">Win + R</code> → <code style="background:var(--surface3);padding:1px 5px;border-radius:3px">msinfo32</code>
+              </div>
+            </div>
+          </span>
+        </label>
         <select id="ram" onchange="state.ram=parseFloat(this.value)||0; compute()">
           <option value="">— Select memory —</option>
         </select>
