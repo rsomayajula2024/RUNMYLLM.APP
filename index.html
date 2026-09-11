@@ -824,6 +824,42 @@ footer a:hover { color: var(--cyan); }
   background: var(--border);
 }
 
+/* RESET BUTTON */
+.reset-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  text-align: center;
+}
+.reset-btn:hover { border-color: var(--red); color: var(--red); background: rgba(248,113,113,.05); }
+
+/* BACK BUTTON */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  margin-bottom: 18px;
+  transition: all .15s;
+  font-family: var(--display);
+}
+.back-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+
 /* GLOW LINES */
 .glow-line {
   position: absolute;
@@ -848,7 +884,11 @@ footer a:hover { color: var(--cyan); }
   </a>
   <div class="header-right">
     <div class="updated-badge">Updated <span id="last-updated">—</span></div>
-    <a href="https://github.com/yourusername/runmyllm" target="_blank" style="color:var(--text-muted);text-decoration:none;font-size:12px;">★ GitHub</a>
+    <a href="https://github.com/rsomayajula2024/RUNMYLLM.APP" target="_blank" style="color:var(--text-muted);text-decoration:none;font-size:12px;">★ GitHub</a>
+    <img src="https://hits.sh/runmyllm.app.svg?style=flat-square&label=visitors&color=0d2a36&labelColor=1e2d4a" 
+         alt="Visitor count"
+         style="height:20px;border-radius:4px;vertical-align:middle"
+         onerror="this.style.display='none'">
   </div>
 </header>
 
@@ -980,6 +1020,11 @@ footer a:hover { color: var(--cyan); }
         <input type="range" id="ctx-slider" min="0" max="6" step="1" value="2" oninput="setCtx(this.value)">
         <span class="slider-val" id="ctx-val">4K</span>
       </div>
+    </div>
+
+    <!-- Reset -->
+    <div>
+      <button class="reset-btn" onclick="resetAll()">↺ Reset all filters</button>
     </div>
 
   </div>
@@ -1299,6 +1344,49 @@ function applyDetectedHardware(info) {
   compute();
 }
 
+function backToGrid() {
+  document.getElementById('model').value = '';
+  state.modelIdx = null;
+  compute();
+}
+
+function resetAll() {
+  // Reset state
+  state.brand = ''; state.chip = ''; state.ram = 0;
+  state.company = ''; state.modelIdx = null;
+  state.quant = 'q4'; state.ctx = 4096;
+
+  // Reset hardware dropdowns
+  document.getElementById('brand').value = '';
+  document.getElementById('chip').innerHTML = '<option value="">— Select chip —</option>';
+  document.getElementById('ram').innerHTML  = '<option value="">— Select memory —</option>';
+
+  // Reset model dropdown
+  document.getElementById('model').value = '';
+
+  // Reset company pills
+  document.querySelectorAll('.cpill').forEach(p => p.classList.toggle('active', p.dataset.co === ''));
+
+  // Reset quant tabs
+  document.querySelectorAll('.qtab').forEach(t => t.classList.toggle('active', t.dataset.q === 'q4'));
+  document.getElementById('quant-hint').textContent = QUANT_HINTS['q4'];
+
+  // Reset context slider
+  document.getElementById('ctx-slider').value = 2;
+  document.getElementById('ctx-val').textContent = '4K';
+
+  // Reset device toggle
+  setDevice('laptop');
+
+  // Reset detect button
+  document.getElementById('detect-btn').querySelector('#detect-icon').textContent = '⚡';
+  document.getElementById('detect-btn').querySelector('#detect-label').textContent = 'Detect my hardware automatically';
+  document.getElementById('detect-result').classList.remove('show');
+
+  populateModels();
+  compute();
+}
+
 // ── STARS ─────────────────────────────────────────────────────────────────
 function buildStars() {
   const sf = document.getElementById('starfield');
@@ -1510,6 +1598,8 @@ function renderSingle(panel, m, ram) {
   const ollama_cmd = m.ollama_tag ? `ollama run ${m.ollama_tag}` : null;
 
   panel.innerHTML = `
+    <button class="back-btn" onclick="backToGrid()">← Back to all models</button>
+
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
       <div style="width:44px;height:44px;border-radius:10px;background:${co.bg};display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${co.emoji}</div>
       <div>
@@ -1585,35 +1675,90 @@ function renderGrid(panel, models, ram) {
   }
 
   const co = state.company && COMPANIES[state.company];
-  const heading = co ? `${co.emoji} ${co.name} models` : 'All models';
 
-  const cards = models.map((m,i) => {
-    const tot = totalGB(m.params, state.quant, state.ctx);
-    const coM = COMPANIES[m.company]||{emoji:'?',color:'#888',bg:'#222'};
-    const v   = ram ? verdict(tot,ram) : '';
-    const statusHTML = ram ? `<span class="mc-status ${v}">${v==='run'?'✅ Fits':v==='warn'?'⚠️ Tight':'❌ Too big'}</span>` : '';
-    return `<div class="mcard" onclick="selectModel('${m.name.replace(/'/g,"\\'")}')">
-      <div class="mc-top">
-        <div class="mc-logo" style="background:${coM.bg}">${coM.emoji}</div>
-        <div style="flex:1;min-width:0">
-          <div class="mc-name">${m.name}</div>
-          <div class="mc-family">${coM.name} · ${m.family}</div>
-        </div>
-        ${statusHTML}
-      </div>
-      <div class="mc-params">${m.params}B params</div>
-      <div class="mc-mem">${state.quant.toUpperCase()} · ~${fmt(tot)} GB${ram?' / '+ram+' GB':''}</div>
-      <a class="mc-link" href="${m.dl}" target="_blank" onclick="event.stopPropagation()">⬇ Download ↗</a>
+  // When RAM is known — sort and group by compatibility
+  if (ram) {
+    // Score each model
+    const scored = models.map(m => {
+      const tot = totalGB(m.params, state.quant, state.ctx);
+      const v   = verdict(tot, ram);
+      const score = v === 'run' ? 0 : v === 'warn' ? 1 : 2;
+      return { m, tot, v, score };
+    }).sort((a, b) => a.score - b.score || a.tot - b.tot);
+
+    const groups = { run: [], warn: [], fail: [] };
+    scored.forEach(s => groups[s.v].push(s));
+
+    const groupConfig = {
+      run:  { label: '✅ Runs comfortably', sub: 'These models fit your hardware with headroom', color: 'var(--green)' },
+      warn: { label: '⚠️ Tight fit',        sub: 'May work but memory will be nearly full',       color: 'var(--amber)' },
+      fail: { label: '❌ Won\'t fit',        sub: 'Needs more memory than available',              color: 'var(--red)'   },
+    };
+
+    let html = `<div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">
+      ${co ? `${co.emoji} ${co.name} models` : 'All models'} · <span style="font-family:var(--mono);color:var(--cyan)">${state.quant.toUpperCase()} · ${ram} GB</span>
+      · sorted by compatibility
     </div>`;
-  }).join('');
 
-  const ramNote = ram ? ` · ${ram} GB` : ' · select hardware to see compatibility';
+    ['run','warn','fail'].forEach(key => {
+      if (!groups[key].length) return;
+      const cfg = groupConfig[key];
+      html += `<div style="margin-bottom:20px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)">
+          <span style="font-size:13px;font-weight:600;color:${cfg.color}">${cfg.label}</span>
+          <span style="font-size:11px;color:var(--text-muted)">${cfg.sub}</span>
+          <span style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--text-muted)">${groups[key].length} model${groups[key].length>1?'s':''}</span>
+        </div>
+        <div class="models-grid">
+          ${groups[key].map(({m, tot, v}) => modelCard(m, tot, v, ram)).join('')}
+        </div>
+      </div>`;
+    });
 
-  panel.innerHTML = `
-    <div class="sec-head">${heading} — ${state.quant.toUpperCase()}${ramNote}</div>
-    <div class="models-grid">${cards}</div>
-    <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Click any card for full memory breakdown and download command.</div>
-  `;
+    html += `<div style="font-size:12px;color:var(--text-muted);margin-top:4px">Click any card for full memory breakdown and run command.</div>`;
+    panel.innerHTML = html;
+
+  } else {
+    // No RAM selected — show flat grid with prompt
+    const ramNote = ' · select hardware to see compatibility';
+    const cards = models.map(m => {
+      const tot = totalGB(m.params, state.quant, state.ctx);
+      return modelCard(m, tot, '', null);
+    }).join('');
+
+    panel.innerHTML = `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px">
+        <span style="font-size:20px">⚡</span>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">Detect or select your hardware to see compatibility</div>
+          <div style="font-size:12px;color:var(--text-muted)">Models will sort into ✅ Fits / ⚠️ Tight / ❌ Won't fit groups instantly</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">${co ? `${co.emoji} ${co.name} models` : 'All models'} · ${state.quant.toUpperCase()}${ramNote}</div>
+      <div class="models-grid">${cards}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:8px">Click any card for full memory breakdown.</div>
+    `;
+  }
+}
+
+function modelCard(m, tot, v, ram) {
+  const coM = COMPANIES[m.company]||{emoji:'?',color:'#888',bg:'#222'};
+  const statusHTML = ram
+    ? `<span class="mc-status ${v}">${v==='run'?'✅ Fits':v==='warn'?'⚠️ Tight':'❌ Too big'}</span>`
+    : '';
+  return `<div class="mcard" onclick="selectModel('${m.name.replace(/'/g,"\\'")}')">
+    <div class="mc-top">
+      <div class="mc-logo" style="background:${coM.bg}">${coM.emoji}</div>
+      <div style="flex:1;min-width:0">
+        <div class="mc-name">${m.name}</div>
+        <div class="mc-family">${coM.name} · ${m.family}</div>
+      </div>
+      ${statusHTML}
+    </div>
+    <div class="mc-params">${m.params}B params</div>
+    <div class="mc-mem">${state.quant.toUpperCase()} · ~${fmt(tot)} GB${ram?' / '+ram+' GB':''}</div>
+    <a class="mc-link" href="${m.dl}" target="_blank" onclick="event.stopPropagation()">⬇ Download ↗</a>
+  </div>`;
 }
 
 // ── FALLBACK ──────────────────────────────────────────────────────────────
