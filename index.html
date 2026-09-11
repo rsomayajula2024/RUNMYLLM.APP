@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RunMyLLM.app — Will it run on your hardware?</title>
+<meta name="description" content="Instantly check if any local LLM model runs on your Mac, PC, or GPU. See exact memory breakdown, quantization options, and download links.">
+<meta property="og:title" content="RunMyLLM.app">
+<meta property="og:description" content="Will your LLM run on your laptop? Find out instantly.">
+<meta property="og:image" content="https://runmyllm.app/og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #07090f;
+  --surface:   #0e1320;
+  --surface2:  #141a2e;
+  --surface3:  #1a2138;
+  --border:    #1e2d4a;
+  --border2:   #243352;
+  --cyan:      #22d3ee;
+  --cyan-glow: rgba(34,211,238,.15);
+  --cyan-dim:  #0d2a36;
+  --green:     #4ade80;
+  --green-dim: #0a2218;
+  --amber:     #fbbf24;
+  --amber-dim: #2d1f00;
+  --red:       #f87171;
+  --red-dim:   #2a0f0f;
+  --violet:    #a78bfa;
+  --text:      #e2e8f0;
+  --text-muted:#6b7fa3;
+  --text-dim:  #94a3b8;
+  --mono:      'JetBrains Mono', monospace;
+  --display:   'Space Grotesk', sans-serif;
+}
+
+body {
+  font-family: var(--display);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── STARFIELD ── */
+.starfield {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: white;
+  animation: twinkle var(--d, 3s) ease-in-out infinite var(--delay, 0s);
+}
+@keyframes twinkle { 0%,100%{opacity:var(--min,.1)} 50%{opacity:var(--max,.6)} }
+
+/* ── HEADER ── */
+header {
+  position: relative;
+  z-index: 10;
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(7,9,15,.85);
+  backdrop-filter: blur(12px);
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+.logo-mark {
+  width: 32px; height: 32px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, var(--cyan) 0%, var(--violet) 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--bg);
+  letter-spacing: -.03em;
+  flex-shrink: 0;
+}
+.logo-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -.02em;
+}
+.logo-name span { color: var(--text-muted); font-weight: 400; }
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.updated-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.updated-badge span { color: var(--green); }
+
+/* ── HERO ── */
+.hero {
+  position: relative;
+  z-index: 5;
+  text-align: center;
+  padding: 56px 32px 40px;
+  border-bottom: 1px solid var(--border);
+}
+.hero-eyebrow {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--cyan);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.hero-eyebrow::before, .hero-eyebrow::after {
+  content: '';
+  width: 32px; height: 1px;
+  background: var(--cyan);
+  opacity: .4;
+}
+.hero h1 {
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 700;
+  letter-spacing: -.03em;
+  line-height: 1.1;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+.hero h1 em {
+  font-style: normal;
+  background: linear-gradient(90deg, var(--cyan), var(--violet));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-sub {
+  font-size: 16px;
+  color: var(--text-muted);
+  max-width: 480px;
+  margin: 0 auto 32px;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* ── COMPANY TICKER ── */
+.ticker-wrap {
+  overflow: hidden;
+  margin: 0 -32px;
+  padding: 0 0 4px;
+}
+.ticker-track {
+  display: flex;
+  gap: 0;
+  animation: ticker 28s linear infinite;
+  width: max-content;
+}
+.ticker-track:hover { animation-play-state: paused; }
+@keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+.ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 28px;
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+  cursor: default;
+  transition: background .2s;
+}
+.ticker-item:hover { background: var(--surface2); }
+.company-logo {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.ticker-name { font-size: 13px; font-weight: 500; color: var(--text-dim); }
+.ticker-count { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
+
+/* ── MAIN LAYOUT ── */
+.app {
+  position: relative;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  min-height: calc(100vh - 60px - 220px);
+}
+
+/* ── LEFT PANEL ── */
+.panel-left {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+.pane-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+/* DEVICE TOGGLE */
+.device-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.dtog {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 12px 8px;
+  border-radius: 9px;
+  cursor: pointer;
+  text-align: center;
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all .18s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.dtog .dicon { font-size: 22px; }
+.dtog:hover { border-color: var(--cyan); color: var(--text); }
+.dtog.active {
+  background: var(--cyan-dim);
+  border-color: var(--cyan);
+  color: var(--cyan);
+  box-shadow: 0 0 16px rgba(34,211,238,.08);
+}
+
+/* FIELD */
+.field { margin-bottom: 12px; }
+.field label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+select {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 32px 9px 12px;
+  border-radius: 8px;
+  font-family: var(--display);
+  font-size: 13px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%236b7fa3' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+}
+select:hover { border-color: var(--border2); }
+select:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(34,211,238,.1); }
+
+/* QUANT TABS */
+.quant-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+}
+.qtab {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 7px 2px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
+  transition: all .15s;
+}
+.qtab:hover { border-color: var(--cyan); color: var(--cyan); }
+.qtab.active {
+  background: var(--cyan-dim);
+  border-color: var(--cyan);
+  color: var(--cyan);
+  font-weight: 600;
+}
+.quant-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 7px;
+  line-height: 1.5;
+}
+
+/* TOOLTIP */
+.pane-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+.pane-title-row .pane-title { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+.info-icon {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  cursor: help;
+  position: relative;
+  flex-shrink: 0;
+}
+.info-icon:hover { border-color: var(--cyan); color: var(--cyan); }
+.info-icon .tooltip {
+  display: none;
+  position: absolute;
+  left: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 14px 16px;
+  width: 260px;
+  z-index: 100;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  pointer-events: none;
+}
+.info-icon:hover .tooltip { display: block; }
+.tooltip-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.tooltip-body { font-size: 12px; color: var(--text-dim); line-height: 1.6; font-weight: 400; }
+.tooltip-body strong { color: var(--cyan); font-weight: 600; }
+.tooltip-rows { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.tooltip-row { display: flex; align-items: baseline; gap: 8px; font-size: 11px; }
+.tooltip-row .tq {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--cyan);
+  background: rgba(34,211,238,.08);
+  border: 1px solid rgba(34,211,238,.15);
+  border-radius: 3px;
+  padding: 1px 5px;
+  min-width: 36px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.tooltip-row .td { color: var(--text-muted); line-height: 1.4; }
+
+/* SLIDER */
+.slider-row { display: flex; align-items: center; gap: 10px; }
+input[type=range] {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 3px;
+  background: var(--border2);
+  border-radius: 2px;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px; height: 15px;
+  background: var(--cyan);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(34,211,238,.4);
+}
+.slider-val {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--cyan);
+  min-width: 40px;
+  text-align: right;
+}
+
+/* COMPANY FILTER PILLS */
+.company-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cpill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.cpill .pill-logo {
+  width: 16px; height: 16px;
+  border-radius: 3px;
+  font-size: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+.cpill:hover { border-color: var(--border2); color: var(--text); }
+.cpill.active {
+  border-color: var(--cyan);
+  background: var(--cyan-dim);
+  color: var(--cyan);
+}
+
+/* ── RIGHT PANEL ── */
+.panel-right {
+  padding: 24px 28px;
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+/* VERDICT */
+.verdict {
+  border-radius: 12px;
+  padding: 22px 24px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  transition: all .3s;
+}
+.verdict.run  { background: var(--green-dim); border-color: rgba(74,222,128,.25); }
+.verdict.warn { background: var(--amber-dim); border-color: rgba(251,191,36,.25); }
+.verdict.fail { background: var(--red-dim);   border-color: rgba(248,113,113,.25); }
+.v-icon { font-size: 36px; flex-shrink: 0; margin-top: 2px; }
+.v-title { font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
+.verdict.run  .v-title { color: var(--green); }
+.verdict.warn .v-title { color: var(--amber); }
+.verdict.fail .v-title { color: var(--red); }
+.v-sub { font-size: 13px; color: var(--text-dim); margin-top: 3px; }
+.v-chip {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+/* MEMORY BAR */
+.mem-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin-bottom: 16px;
+}
+.mem-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.mem-title { font-size: 13px; font-weight: 600; color: var(--text-dim); }
+.mem-fraction { font-family: var(--mono); font-size: 12px; color: var(--text-muted); }
+.mem-track {
+  height: 20px;
+  background: var(--surface2);
+  border-radius: 5px;
+  overflow: hidden;
+  display: flex;
+  margin-bottom: 12px;
+}
+.mem-seg {
+  height: 100%;
+  transition: width .45s cubic-bezier(.4,0,.2,1);
+}
+.ms-model    { background: linear-gradient(90deg, #22d3ee, #38bdf8); }
+.ms-kv       { background: #818cf8; }
+.ms-overhead { background: #34d399; opacity: .7; }
+.ms-free     { background: var(--border); }
+.ms-overflow { background: var(--red); animation: blink 1.4s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.5} }
+.mem-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.leg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.leg-dot {
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.ld-model    { background: var(--cyan); }
+.ld-kv       { background: #818cf8; }
+.ld-overhead { background: #34d399; }
+.ld-free     { background: var(--border2); }
+
+/* BREAKDOWN */
+.breakdown {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.bd-head {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.bd-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 11px 18px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.bd-row:last-child { border-bottom: none; }
+.bd-row.total { background: var(--surface2); }
+.bd-label { font-size: 13px; color: var(--text-dim); }
+.bd-explain { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.bd-val { font-family: var(--mono); font-size: 13px; color: var(--text); white-space: nowrap; }
+.bd-row.total .bd-val { color: var(--cyan); font-weight: 600; }
+
+/* MODEL GRID */
+.models-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.mcard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  transition: border-color .18s, transform .18s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.mcard::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent, transparent);
+  transition: opacity .2s;
+  opacity: 0;
+}
+.mcard:hover { border-color: var(--border2); transform: translateY(-1px); }
+.mcard:hover::before { opacity: 1; }
+.mcard.selected { border-color: var(--cyan); background: var(--cyan-dim); }
+.mcard.selected::before { opacity: 1; background: var(--cyan); }
+.mc-top { display: flex; align-items: center; gap: 10px; }
+.mc-logo {
+  width: 30px; height: 30px;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.mc-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.mc-family { font-size: 11px; color: var(--text-muted); }
+.mc-status {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.mc-status.run  { background: var(--green-dim); color: var(--green); }
+.mc-status.warn { background: var(--amber-dim); color: var(--amber); }
+.mc-status.fail { background: var(--red-dim);   color: var(--red); }
+.mc-params {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--cyan);
+  background: rgba(34,211,238,.08);
+  border: 1px solid rgba(34,211,238,.15);
+  border-radius: 4px;
+  padding: 2px 7px;
+  width: fit-content;
+}
+.mc-mem { font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
+.mc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--cyan);
+  text-decoration: none;
+  width: fit-content;
+}
+.mc-link:hover { text-decoration: underline; }
+
+/* DOWNLOAD PANEL */
+.dl-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin-bottom: 16px;
+}
+.dl-title { font-size: 13px; font-weight: 600; color: var(--text-dim); margin-bottom: 12px; }
+.code-block {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  border-radius: 7px;
+  color: var(--cyan);
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.copy-btn {
+  font-size: 11px;
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  color: var(--text-muted);
+  padding: 4px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: var(--display);
+  transition: all .15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.copy-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.dl-links { display: flex; gap: 10px; flex-wrap: wrap; }
+.dl-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+  text-decoration: none;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all .15s;
+  font-weight: 500;
+}
+.dl-link:hover { border-color: var(--cyan); color: var(--cyan); }
+
+/* SECTION HEADING */
+.sec-head {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* EMPTY STATE */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 360px;
+  gap: 14px;
+  text-align: center;
+}
+.empty-graphic {
+  width: 80px; height: 80px;
+  border-radius: 20px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  margin-bottom: 6px;
+}
+.empty-title { font-size: 17px; font-weight: 600; color: var(--text-dim); }
+.empty-sub { font-size: 13px; color: var(--text-muted); max-width: 300px; }
+
+/* FOOTER */
+footer {
+  position: relative;
+  z-index: 5;
+  border-top: 1px solid var(--border);
+  padding: 18px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+footer a { color: var(--text-muted); text-decoration: none; }
+footer a:hover { color: var(--cyan); }
+
+/* RESPONSIVE */
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .panel-left { border-right: none; border-bottom: 1px solid var(--border); max-height: none; }
+  header { padding: 0 16px; }
+  .hero { padding: 36px 16px 28px; }
+  .panel-right { padding: 18px 16px; }
+}
+
+/* AUTO-DETECT */
+.detect-btn {
+  width: 100%;
+  background: linear-gradient(135deg, rgba(34,211,238,.12), rgba(167,139,250,.12));
+  border: 1px solid rgba(34,211,238,.35);
+  color: var(--cyan);
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all .2s;
+  margin-bottom: 10px;
+}
+.detect-btn:hover {
+  background: linear-gradient(135deg, rgba(34,211,238,.2), rgba(167,139,250,.2));
+  border-color: var(--cyan);
+  box-shadow: 0 0 20px rgba(34,211,238,.12);
+}
+.detect-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+.detect-btn .spin {
+  display: inline-block;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.detect-result {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+  display: none;
+  line-height: 1.6;
+}
+.detect-result.show { display: block; }
+.detect-result .dr-row { display: flex; justify-content: space-between; }
+.detect-result .dr-key { color: var(--text-muted); }
+.detect-result .dr-val { font-family: var(--mono); color: var(--text); font-size: 11px; }
+.detect-result .dr-warn { color: var(--amber); font-size: 11px; margin-top: 5px; }
+
+.divider-or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 11px;
+  margin-bottom: 10px;
+}
+.divider-or::before, .divider-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* GLOW LINES */
+.glow-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  opacity: .15;
+  pointer-events: none;
+}
+</style>
+</head>
+<body>
+
+<!-- STARFIELD -->
+<div class="starfield" id="starfield"></div>
+
+<!-- HEADER -->
+<header>
+  <a class="logo" href="/">
+    <div class="logo-mark">CL</div>
+    <div class="logo-name">RunMyLLM<span>.app</span></div>
+  </a>
+  <div class="header-right">
+    <div class="updated-badge">Updated <span id="last-updated">—</span></div>
+    <a href="https://github.com/yourusername/runmyllm" target="_blank" style="color:var(--text-muted);text-decoration:none;font-size:12px;">★ GitHub</a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="glow-line" style="top:0"></div>
+  <div class="hero-eyebrow">Local AI · Memory Calculator</div>
+  <h1>Will your LLM run<br>on <em>this</em> machine?</h1>
+  <p class="hero-sub">Pick any model, configure your hardware, and see exactly where the memory goes — in seconds.</p>
+
+  <!-- COMPANY TICKER -->
+  <div class="ticker-wrap" id="ticker-wrap">
+    <div class="ticker-track" id="ticker"></div>
+  </div>
+</section>
+
+<!-- APP -->
+<div class="app">
+
+  <!-- LEFT -->
+  <div class="panel-left">
+
+    <!-- Device -->
+    <div>
+      <div class="pane-title">Your device</div>
+      <div class="device-grid">
+        <button class="dtog active" id="tog-laptop" onclick="setDevice('laptop')">
+          <span class="dicon">💻</span> Laptop
+        </button>
+        <button class="dtog" id="tog-desktop" onclick="setDevice('desktop')">
+          <span class="dicon">🖥️</span> Desktop / PC
+        </button>
+      </div>
+    </div>
+
+    <!-- Auto-detect -->
+    <div>
+      <div class="pane-title">Hardware</div>
+      <button class="detect-btn" id="detect-btn" onclick="detectHardware()">
+        <span id="detect-icon">⚡</span>
+        <span id="detect-label">Detect my hardware automatically</span>
+      </button>
+      <div class="detect-result" id="detect-result">
+        <div class="dr-row"><span class="dr-key">GPU</span><span class="dr-val" id="dr-gpu">—</span></div>
+        <div class="dr-row"><span class="dr-key">RAM tier</span><span class="dr-val" id="dr-ram">—</span></div>
+        <div class="dr-row"><span class="dr-key">Platform</span><span class="dr-val" id="dr-platform">—</span></div>
+        <div class="dr-warn" id="dr-warn"></div>
+      </div>
+      <div class="divider-or">or enter manually</div>
+    </div>
+
+    <!-- Hardware dropdowns -->
+    <div>
+      <div class="field">
+        <label>Brand / Platform</label>
+        <select id="brand" onchange="onBrandChange()">
+          <option value="">— Select brand —</option>
+          <option value="apple">Apple Silicon (M-series)</option>
+          <option value="nvidia">NVIDIA GPU</option>
+          <option value="amd">AMD GPU</option>
+          <option value="intel">Intel CPU / Arc GPU</option>
+          <option value="generic">CPU-only (any brand)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Chip / GPU</label>
+        <select id="chip" onchange="onChipChange()">
+          <option value="">— Select chip —</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>RAM / VRAM</label>
+        <select id="ram" onchange="compute()">
+          <option value="">— Select memory —</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Company filter -->
+    <div>
+      <div class="pane-title">AI company</div>
+      <div class="company-pills" id="company-pills"></div>
+    </div>
+
+    <!-- Model -->
+    <div>
+      <div class="pane-title">Model</div>
+      <div class="field">
+        <select id="model" onchange="compute()">
+          <option value="">— All models (see grid) —</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Quantization -->
+    <div>
+      <div class="pane-title-row">
+        <div class="pane-title">Quantization</div>
+        <div class="info-icon">?
+          <div class="tooltip">
+            <div class="tooltip-title">What is quantization?</div>
+            <div class="tooltip-body">
+              Think of it like image quality. <strong>Higher = sharper but bigger file.</strong> Lower = smaller file, slight quality drop. It controls how precisely the AI model's "knowledge" is stored — and directly determines how much RAM it needs.
+              <div class="tooltip-rows">
+                <div class="tooltip-row"><span class="tq">FP16</span><span class="td">Full quality — needs the most RAM. Best results.</span></div>
+                <div class="tooltip-row"><span class="tq">Q8</span><span class="td">Near-perfect quality, half the size of FP16.</span></div>
+                <div class="tooltip-row"><span class="tq">Q4</span><span class="td">Sweet spot — great quality, runs on most laptops.</span></div>
+                <div class="tooltip-row"><span class="tq">Q3</span><span class="td">Smaller, but noticeably less accurate.</span></div>
+                <div class="tooltip-row"><span class="tq">Q2</span><span class="td">Tiny file, significant quality loss. Not recommended.</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="quant-row">
+        <button class="qtab" data-q="fp16" onclick="setQuant('fp16')">FP16</button>
+        <button class="qtab" data-q="q8"   onclick="setQuant('q8')">Q8</button>
+        <button class="qtab active" data-q="q4" onclick="setQuant('q4')">Q4</button>
+        <button class="qtab" data-q="q3"   onclick="setQuant('q3')">Q3</button>
+        <button class="qtab" data-q="q2"   onclick="setQuant('q2')">Q2</button>
+      </div>
+      <div class="quant-hint" id="quant-hint">Q4: 4 bits/weight — best quality-size balance for local use.</div>
+    </div>
+
+    <!-- Context -->
+    <div>
+      <div class="pane-title">Context length</div>
+      <div class="slider-row">
+        <input type="range" id="ctx-slider" min="0" max="6" step="1" value="2" oninput="setCtx(this.value)">
+        <span class="slider-val" id="ctx-val">4K</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div class="panel-right" id="right-panel">
+    <div class="empty-state">
+      <div class="empty-graphic">🔍</div>
+      <div class="empty-title">Configure your hardware</div>
+      <div class="empty-sub">Select brand, chip, and RAM on the left — then pick a model to see full memory breakdown.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div>RunMyLLM.app — memory estimates are approximate, ±10%</div>
+  <div style="display:flex;gap:20px">
+    <a href="https://ollama.com" target="_blank">Ollama</a>
+    <a href="https://lmstudio.ai" target="_blank">LM Studio</a>
+    <a href="https://huggingface.co" target="_blank">HuggingFace</a>
+    <a href="https://github.com/yourusername/runmyllm" target="_blank">GitHub</a>
+  </div>
+</footer>
+
+<script>
+// ── COMPANY META ──────────────────────────────────────────────────────────
+const COMPANIES = {
+  meta:      { name: 'Meta',      emoji: '🦙', color: '#3b82f6', bg: '#1d2e5e' },
+  mistral:   { name: 'Mistral',   emoji: '🌊', color: '#f97316', bg: '#3d1f0a' },
+  google:    { name: 'Google',    emoji: '💎', color: '#ea4335', bg: '#3a100e' },
+  microsoft: { name: 'Microsoft', emoji: '⬡',  color: '#00a4ef', bg: '#003050' },
+  alibaba:   { name: 'Alibaba',   emoji: '🐉', color: '#ff6a00', bg: '#3d1a00' },
+  deepseek:  { name: 'DeepSeek',  emoji: '🔬', color: '#06b6d4', bg: '#032d38' },
+  cohere:    { name: 'Cohere',    emoji: '⌘',  color: '#a78bfa', bg: '#281a50' },
+  '01ai':    { name: '01.AI',     emoji: '一', color: '#d946ef', bg: '#2d0a38' },
+};
+
+const QUANT_BPW   = { fp16:16, q8:8, q4:4, q3:3, q2:2 };
+const QUANT_HINTS = {
+  fp16: 'FP16: Full 16-bit precision. Best quality, maximum VRAM use.',
+  q8:   'Q8: 8 bits/weight — near-lossless, ~2× smaller than FP16.',
+  q4:   'Q4: 4 bits/weight — best quality-size balance for local use.',
+  q3:   'Q3: 3 bits/weight — aggressive compression, noticeable quality drop.',
+  q2:   'Q2: 2 bits/weight — extreme compression, major quality loss.',
+};
+const CTX_LABELS  = ['512','1K','2K','4K','8K','16K','32K'];
+const CTX_VALUES  = [512,1024,2048,4096,8192,16384,32768];
+
+const CHIPS = {
+  apple: [
+    {l:'M1',v:'m1'},{l:'M1 Pro',v:'m1pro'},{l:'M1 Max',v:'m1max'},{l:'M1 Ultra',v:'m1ultra'},
+    {l:'M2',v:'m2'},{l:'M2 Pro',v:'m2pro'},{l:'M2 Max',v:'m2max'},{l:'M2 Ultra',v:'m2ultra'},
+    {l:'M3',v:'m3'},{l:'M3 Pro',v:'m3pro'},{l:'M3 Max',v:'m3max'},
+    {l:'M4',v:'m4'},{l:'M4 Pro',v:'m4pro'},{l:'M4 Max',v:'m4max'},
+  ],
+  nvidia: [
+    {l:'RTX 3060 (12GB)',v:'rtx3060'},{l:'RTX 3080 (10GB)',v:'rtx3080'},
+    {l:'RTX 3090 (24GB)',v:'rtx3090'},{l:'RTX 4060 Ti (16GB)',v:'rtx4060ti'},
+    {l:'RTX 4070 (12GB)',v:'rtx4070'},{l:'RTX 4070 Ti (12GB)',v:'rtx4070ti'},
+    {l:'RTX 4080 (16GB)',v:'rtx4080'},{l:'RTX 4090 (24GB)',v:'rtx4090'},
+    {l:'RTX 5080 (16GB)',v:'rtx5080'},{l:'RTX 5090 (32GB)',v:'rtx5090'},
+    {l:'A100 (40GB)',v:'a100_40'},{l:'A100 (80GB)',v:'a100_80'},{l:'H100 (80GB)',v:'h100'},
+  ],
+  amd: [
+    {l:'RX 6700 XT (12GB)',v:'rx6700xt'},{l:'RX 6800 XT (16GB)',v:'rx6800xt'},
+    {l:'RX 6900 XT (16GB)',v:'rx6900xt'},{l:'RX 7600 (8GB)',v:'rx7600'},
+    {l:'RX 7900 XTX (24GB)',v:'rx7900xtx'},{l:'RX 9070 XT (16GB)',v:'rx9070xt'},
+  ],
+  intel: [
+    {l:'Core Ultra 5 (iGPU)',v:'coreultra5'},{l:'Core Ultra 7 (iGPU)',v:'coreultra7'},
+    {l:'Arc A770 (16GB)',v:'arca770'},{l:'Arc B580 (12GB)',v:'arcb580'},
+  ],
+  generic: [
+    {l:'CPU-only DDR4',v:'cpu_ddr4'},{l:'CPU-only DDR5',v:'cpu_ddr5'},
+  ],
+};
+
+const VRAM_MAP = {
+  rtx3060:[12],rtx3080:[10],rtx3090:[24],rtx4060ti:[16],rtx4070:[12],rtx4070ti:[12],
+  rtx4080:[16],rtx4090:[24],rtx5080:[16],rtx5090:[32],a100_40:[40],a100_80:[80],h100:[80],
+  rx6700xt:[12],rx6800xt:[16],rx6900xt:[16],rx7600:[8],rx7900xtx:[24],rx9070xt:[16],
+  coreultra5:[16,32],coreultra7:[16,32],arca770:[16],arcb580:[12],
+  cpu_ddr4:[8,16,32,64,128],cpu_ddr5:[16,32,64,128,256],
+};
+const APPLE_RAM = [8,16,24,32,48,64,96,128,192];
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let MODELS = [];
+let state = { device:'laptop', brand:'', chip:'', ram:0, company:'', modelIdx:null, quant:'q4', ctx:4096 };
+
+// ── BOOT ─────────────────────────────────────────────────────────────────
+async function boot() {
+  buildStars();
+  buildCompanyPills();
+
+  try {
+    const res = await fetch('data/models.json');
+    const data = await res.json();
+    MODELS = data.models || [];
+    const el = document.getElementById('last-updated');
+    if (el && data.last_updated) {
+      const d = new Date(data.last_updated);
+      el.textContent = d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    }
+  } catch(e) {
+    console.warn('Could not load models.json, using fallback', e);
+    MODELS = FALLBACK_MODELS;
+  }
+
+  buildTicker();
+  populateModels();
+  compute();
+}
+
+// ── HARDWARE DETECTION ────────────────────────────────────────────────────
+
+async function detectHardware() {
+  const btn   = document.getElementById('detect-btn');
+  const icon  = document.getElementById('detect-icon');
+  const label = document.getElementById('detect-label');
+  const panel = document.getElementById('detect-result');
+
+  // Loading state
+  btn.disabled = true;
+  icon.className = 'spin';
+  icon.textContent = '⟳';
+  label.textContent = 'Detecting…';
+
+  await new Promise(r => setTimeout(r, 600)); // let UI update
+
+  try {
+    const info = readHardwareInfo();
+    showDetectResult(info);
+    applyDetectedHardware(info);
+  } catch(e) {
+    console.warn('Detection error', e);
+    showDetectError();
+  }
+
+  btn.disabled = false;
+  icon.className = '';
+  icon.textContent = '🔄';
+  label.textContent = 'Re-detect hardware';
+}
+
+function readHardwareInfo() {
+  // ── GPU via WebGL ──
+  let gpuString = '';
+  let gpuVendor = '';
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (gl) {
+      const ext = gl.getExtension('WEBGL_debug_renderer_info');
+      if (ext) {
+        gpuString = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '';
+        gpuVendor = gl.getParameter(ext.UNMASKED_VENDOR_WEBGL)   || '';
+      }
+    }
+  } catch(e) {}
+
+  // ── RAM via navigator.deviceMemory (Chrome/Edge only, bucketed) ──
+  const ramGB = navigator.deviceMemory || null; // 0.25, 0.5, 1, 2, 4, 8 — capped at 8 in API
+
+  // ── Platform ──
+  const ua       = navigator.userAgent;
+  const platform = navigator.platform || '';
+  const isMac    = /Mac/.test(platform) || /Macintosh/.test(ua);
+  const isWin    = /Win/.test(platform);
+  const isLinux  = /Linux/.test(platform) && !/Android/.test(ua);
+  const isMobile = /Android|iPhone|iPad/.test(ua);
+
+  return { gpuString, gpuVendor, ramGB, isMac, isWin, isLinux, isMobile, ua };
+}
+
+function showDetectResult(info) {
+  document.getElementById('dr-gpu').textContent      = info.gpuString || 'Could not read';
+  document.getElementById('dr-ram').textContent      = info.ramGB ? `≥${info.ramGB} GB (browser estimate)` : 'Not available';
+  document.getElementById('dr-platform').textContent = info.isMac ? 'macOS' : info.isWin ? 'Windows' : info.isLinux ? 'Linux' : info.isMobile ? 'Mobile' : 'Unknown';
+
+  const warn = document.getElementById('dr-warn');
+  if (!info.gpuString) {
+    warn.textContent = '⚠ GPU info blocked by your browser — please set manually.';
+  } else if (info.ramGB && info.ramGB <= 8) {
+    warn.textContent = '⚠ Browser caps RAM reporting at 8 GB — verify actual memory below.';
+  } else {
+    warn.textContent = '';
+  }
+  document.getElementById('detect-result').classList.add('show');
+}
+
+function showDetectError() {
+  document.getElementById('dr-gpu').textContent      = 'Detection failed';
+  document.getElementById('dr-ram').textContent      = '—';
+  document.getElementById('dr-platform').textContent = '—';
+  document.getElementById('dr-warn').textContent     = 'Could not read hardware. Please set manually below.';
+  document.getElementById('detect-result').classList.add('show');
+}
+
+function applyDetectedHardware(info) {
+  const gpu = info.gpuString.toLowerCase();
+  let brand = '', chipVal = '', ramOptions = [], bestRam = null;
+
+  // ── APPLE SILICON ──
+  if (info.isMac && (gpu.includes('apple') || gpu.includes('m1') || gpu.includes('m2') || gpu.includes('m3') || gpu.includes('m4'))) {
+    brand = 'apple';
+    // Parse chip from GPU string: "Apple M4 Pro GPU" etc.
+    if      (gpu.includes('m4 max'))   chipVal = 'm4max';
+    else if (gpu.includes('m4 pro'))   chipVal = 'm4pro';
+    else if (gpu.includes('m4'))       chipVal = 'm4';
+    else if (gpu.includes('m3 max'))   chipVal = 'm3max';
+    else if (gpu.includes('m3 pro'))   chipVal = 'm3pro';
+    else if (gpu.includes('m3'))       chipVal = 'm3';
+    else if (gpu.includes('m2 ultra')) chipVal = 'm2ultra';
+    else if (gpu.includes('m2 max'))   chipVal = 'm2max';
+    else if (gpu.includes('m2 pro'))   chipVal = 'm2pro';
+    else if (gpu.includes('m2'))       chipVal = 'm2';
+    else if (gpu.includes('m1 ultra')) chipVal = 'm1ultra';
+    else if (gpu.includes('m1 max'))   chipVal = 'm1max';
+    else if (gpu.includes('m1 pro'))   chipVal = 'm1pro';
+    else                               chipVal = 'm1';
+    ramOptions = [8,16,24,32,48,64,96,128,192];
+    // Best RAM guess from deviceMemory (Apple unified memory ≥ actual)
+    const reported = info.ramGB || 8;
+    bestRam = reported <= 8 ? 8 : reported <= 16 ? 16 : reported <= 24 ? 24 : 32;
+  }
+
+  // ── NVIDIA ──
+  else if (gpu.includes('nvidia') || gpu.includes('geforce') || gpu.includes('rtx') || gpu.includes('gtx') || gpu.includes('quadro')) {
+    brand = 'nvidia';
+    if      (gpu.includes('rtx 5090') || gpu.includes('rtx5090')) { chipVal='rtx5090'; ramOptions=[32]; }
+    else if (gpu.includes('rtx 5080') || gpu.includes('rtx5080')) { chipVal='rtx5080'; ramOptions=[16]; }
+    else if (gpu.includes('h100'))                                 { chipVal='h100';    ramOptions=[80]; }
+    else if (gpu.includes('a100') && gpu.includes('80'))          { chipVal='a100_80'; ramOptions=[80]; }
+    else if (gpu.includes('a100'))                                 { chipVal='a100_40'; ramOptions=[40]; }
+    else if (gpu.includes('rtx 4090') || gpu.includes('rtx4090')) { chipVal='rtx4090'; ramOptions=[24]; }
+    else if (gpu.includes('rtx 4080') || gpu.includes('rtx4080')) { chipVal='rtx4080'; ramOptions=[16]; }
+    else if (gpu.includes('rtx 4070 ti')||gpu.includes('4070ti'))  { chipVal='rtx4070ti'; ramOptions=[12]; }
+    else if (gpu.includes('rtx 4070') || gpu.includes('rtx4070')) { chipVal='rtx4070'; ramOptions=[12]; }
+    else if (gpu.includes('rtx 4060 ti')||gpu.includes('4060ti'))  { chipVal='rtx4060ti'; ramOptions=[16]; }
+    else if (gpu.includes('rtx 3090') || gpu.includes('rtx3090')) { chipVal='rtx3090'; ramOptions=[24]; }
+    else if (gpu.includes('rtx 3080') || gpu.includes('rtx3080')) { chipVal='rtx3080'; ramOptions=[10]; }
+    else if (gpu.includes('rtx 3060') || gpu.includes('rtx3060')) { chipVal='rtx3060'; ramOptions=[12]; }
+    else { brand=''; } // unknown NVIDIA — don't guess
+    if (ramOptions.length) bestRam = ramOptions[0];
+  }
+
+  // ── AMD ──
+  else if (gpu.includes('amd') || gpu.includes('radeon') || gpu.includes('rx ')) {
+    brand = 'amd';
+    if      (gpu.includes('rx 9070 xt')||gpu.includes('rx9070xt')) { chipVal='rx9070xt'; ramOptions=[16]; }
+    else if (gpu.includes('rx 7900 xtx')||gpu.includes('7900xtx')) { chipVal='rx7900xtx'; ramOptions=[24]; }
+    else if (gpu.includes('rx 7600'))                               { chipVal='rx7600';   ramOptions=[8];  }
+    else if (gpu.includes('rx 6900 xt')||gpu.includes('6900xt'))   { chipVal='rx6900xt'; ramOptions=[16]; }
+    else if (gpu.includes('rx 6800 xt')||gpu.includes('6800xt'))   { chipVal='rx6800xt'; ramOptions=[16]; }
+    else if (gpu.includes('rx 6700 xt')||gpu.includes('6700xt'))   { chipVal='rx6700xt'; ramOptions=[12]; }
+    else { brand=''; }
+    if (ramOptions.length) bestRam = ramOptions[0];
+  }
+
+  // ── INTEL ──
+  else if (gpu.includes('intel')) {
+    brand = 'intel';
+    if      (gpu.includes('arc b580'))  { chipVal='arcb580';    ramOptions=[12]; }
+    else if (gpu.includes('arc a770'))  { chipVal='arca770';    ramOptions=[16]; }
+    else if (gpu.includes('arc a750'))  { chipVal='arca770';    ramOptions=[8];  }
+    else if (gpu.includes('ultra 7'))   { chipVal='coreultra7'; ramOptions=[16,32]; }
+    else if (gpu.includes('ultra 5'))   { chipVal='coreultra5'; ramOptions=[16,32]; }
+    else { brand='generic'; chipVal='cpu_ddr5'; ramOptions=[16,32,64]; }
+    if (ramOptions.length) bestRam = ramOptions[0];
+  }
+
+  // ── FALLBACK CPU ──
+  else {
+    brand='generic';
+    chipVal='cpu_ddr5';
+    ramOptions=[16,32,64,128];
+    bestRam = info.ramGB ? Math.max(8, Math.min(128, info.ramGB)) : 16;
+  }
+
+  if (!brand) return; // couldn't identify — leave dropdowns alone
+
+  // ── APPLY TO UI ──
+  // Device type
+  const isMobile = info.isMobile;
+  const deviceType = isMobile ? 'laptop' : (info.isWin || info.isLinux) ? 'desktop' : 'laptop';
+  setDevice(deviceType);
+
+  // Brand
+  document.getElementById('brand').value = brand;
+  state.brand = brand;
+
+  // Populate chips
+  const chipSel = document.getElementById('chip');
+  chipSel.innerHTML = '<option value="">— Select chip —</option>';
+  (CHIPS[brand]||[]).forEach(c => chipSel.appendChild(new Option(c.l, c.v)));
+
+  // Select chip
+  if (chipVal) {
+    chipSel.value = chipVal;
+    state.chip = chipVal;
+  }
+
+  // Populate RAM
+  const ramSel = document.getElementById('ram');
+  ramSel.innerHTML = '<option value="">— Select memory —</option>';
+  ramOptions.forEach(gb => ramSel.appendChild(new Option(`${gb} GB`, gb)));
+
+  // Select best RAM
+  if (bestRam) {
+    ramSel.value = bestRam;
+    state.ram = bestRam;
+  }
+
+  compute();
+}
+
+// ── STARS ─────────────────────────────────────────────────────────────────
+function buildStars() {
+  const sf = document.getElementById('starfield');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2 + .5;
+    s.style.cssText = `
+      width:${size}px;height:${size}px;
+      top:${Math.random()*100}%;left:${Math.random()*100}%;
+      --d:${(Math.random()*4+2).toFixed(1)}s;
+      --delay:-${(Math.random()*4).toFixed(1)}s;
+      --min:${(Math.random()*.2).toFixed(2)};
+      --max:${(Math.random()*.5+.2).toFixed(2)};
+    `;
+    sf.appendChild(s);
+  }
+}
+
+// ── TICKER ────────────────────────────────────────────────────────────────
+function buildTicker() {
+  const companies = Object.entries(COMPANIES);
+  // Count models per company
+  const counts = {};
+  MODELS.forEach(m => counts[m.company] = (counts[m.company]||0)+1);
+
+  const items = companies.map(([key, co]) =>
+    `<div class="ticker-item">
+      <div class="company-logo" style="background:${co.bg}">${co.emoji}</div>
+      <span class="ticker-name">${co.name}</span>
+      <span class="ticker-count">${counts[key]||0} models</span>
+    </div>`
+  ).join('');
+
+  // Duplicate for seamless loop
+  document.getElementById('ticker').innerHTML = items + items;
+}
+
+// ── COMPANY PILLS ─────────────────────────────────────────────────────────
+function buildCompanyPills() {
+  const wrap = document.getElementById('company-pills');
+  const allPill = `<button class="cpill active" data-co="" onclick="setCompany('')">
+    <span style="font-size:12px">🌐</span> All
+  </button>`;
+  const pills = Object.entries(COMPANIES).map(([key, co]) =>
+    `<button class="cpill" data-co="${key}" onclick="setCompany('${key}')">
+      <span class="pill-logo" style="background:${co.bg}">${co.emoji}</span>
+      ${co.name}
+    </button>`
+  ).join('');
+  wrap.innerHTML = allPill + pills;
+}
+
+function setCompany(co) {
+  state.company = co;
+  document.querySelectorAll('.cpill').forEach(p => p.classList.toggle('active', p.dataset.co === co));
+  state.modelIdx = null;
+  populateModels();
+  compute();
+}
+
+// ── HARDWARE ──────────────────────────────────────────────────────────────
+function setDevice(d) {
+  state.device = d;
+  document.getElementById('tog-laptop').classList.toggle('active', d==='laptop');
+  document.getElementById('tog-desktop').classList.toggle('active', d==='desktop');
+  compute();
+}
+
+function onBrandChange() {
+  state.brand = document.getElementById('brand').value;
+  state.chip = ''; state.ram = 0;
+  const chipSel = document.getElementById('chip');
+  chipSel.innerHTML = '<option value="">— Select chip —</option>';
+  (CHIPS[state.brand]||[]).forEach(c => chipSel.appendChild(new Option(c.l, c.v)));
+  document.getElementById('ram').innerHTML = '<option value="">— Select memory —</option>';
+  compute();
+}
+
+function onChipChange() {
+  state.chip = document.getElementById('chip').value;
+  state.ram = 0;
+  const ramSel = document.getElementById('ram');
+  ramSel.innerHTML = '<option value="">— Select memory —</option>';
+  if (!state.chip) { compute(); return; }
+  const opts = state.brand === 'apple' ? APPLE_RAM : (VRAM_MAP[state.chip]||[8,16,32]);
+  opts.forEach(gb => ramSel.appendChild(new Option(`${gb} GB`, gb)));
+  compute();
+}
+
+// ── MODEL ─────────────────────────────────────────────────────────────────
+function populateModels() {
+  const sel = document.getElementById('model');
+  sel.innerHTML = '<option value="">— View all (grid below) —</option>';
+  filtered().forEach((m, i) => sel.appendChild(new Option(`${m.name} (${m.params}B)`, i)));
+}
+
+function filtered() {
+  return state.company ? MODELS.filter(m => m.company === state.company) : MODELS;
+}
+
+// ── QUANTIZATION / CONTEXT ────────────────────────────────────────────────
+function setQuant(q) {
+  state.quant = q;
+  document.querySelectorAll('.qtab').forEach(t => t.classList.toggle('active', t.dataset.q===q));
+  document.getElementById('quant-hint').textContent = QUANT_HINTS[q];
+  compute();
+}
+
+function setCtx(idx) {
+  state.ctx = CTX_VALUES[idx];
+  document.getElementById('ctx-val').textContent = CTX_LABELS[idx];
+  compute();
+}
+
+// ── MEMORY MATH ───────────────────────────────────────────────────────────
+function modelGB(params, quant) { return params * 1e9 * QUANT_BPW[quant] / 8 / 1e9; }
+function kvGB(params, ctx)      { return ctx * params * 0.5 / 1e6; }
+function overGB()               { return 0.5; }
+function totalGB(params, quant, ctx) { return modelGB(params,quant) + kvGB(params,ctx) + overGB(); }
+function verdict(total, ram)    { const r=total/ram; return r<=.75?'run':r<=1?'warn':'fail'; }
+function fmt(n)                 { return n<10?n.toFixed(1):Math.round(n).toString(); }
+function ctxLabel(ctx)          { return ctx>=1000?Math.round(ctx/1024)+'K':ctx.toString(); }
+
+// ── COMPUTE / RENDER ──────────────────────────────────────────────────────
+function compute() {
+  const ram  = parseFloat(document.getElementById('ram').value)||0;
+  const midx = document.getElementById('model').value;
+  const filt = filtered();
+  const model = (midx !== '' && filt[midx]) ? filt[parseInt(midx)] : null;
+  const panel = document.getElementById('right-panel');
+
+  if (!state.brand || !state.chip || !ram) {
+    if (model) { renderSingle(panel, model, null); return; }
+    renderGrid(panel, filt, null);
+    return;
+  }
+
+  if (model) { renderSingle(panel, model, ram); }
+  else        { renderGrid(panel, filt, ram); }
+}
+
+function selectModel(name) {
+  const m = MODELS.find(x=>x.name===name);
+  if (!m) return;
+  setCompany(m.company);
+  const filt = filtered();
+  const idx  = filt.indexOf(m);
+  document.getElementById('model').value = idx;
+  compute();
+}
+
+// ── SINGLE RESULT ─────────────────────────────────────────────────────────
+function renderSingle(panel, m, ram) {
+  const mGB  = modelGB(m.params, state.quant);
+  const kGB  = kvGB(m.params, state.ctx);
+  const oGB  = overGB();
+  const tot  = mGB+kGB+oGB;
+  const v    = ram ? verdict(tot,ram) : 'neutral';
+  const co   = COMPANIES[m.company] || {emoji:'?',color:'#888',bg:'#222'};
+  const bpw  = QUANT_BPW[state.quant];
+
+  const verdictHTML = ram ? (() => {
+    const [icon,title,sub] = v==='run'
+      ? ['✅','Runs comfortably','Model fits with headroom — inference will be smooth.']
+      : v==='warn'
+      ? ['⚠️','Tight fit','Nearly full — may work but expect slower inference or instability.']
+      : ['❌','Won\'t fit','Model needs more memory than available at this configuration.'];
+    const free = Math.max(0, ram-tot);
+    return `<div class="verdict ${v}">
+      <div class="v-icon">${icon}</div>
+      <div style="flex:1">
+        <div class="v-title">${title}</div>
+        <div class="v-sub">${sub}</div>
+      </div>
+      <div class="v-chip">${fmt(tot)} / ${ram} GB</div>
+    </div>`;
+  })() : '';
+
+  const barHTML = ram ? (() => {
+    const scale = Math.max(tot, ram);
+    const mP = mGB/scale*100;
+    const kP = kGB/scale*100;
+    const oP = oGB/scale*100;
+    const fP = Math.max(0,(ram-tot)/scale*100);
+    const xP = tot>ram ? Math.min(30,(tot-ram)/scale*100) : 0;
+    return `<div class="mem-card">
+      <div class="mem-header">
+        <div class="mem-title">Memory breakdown</div>
+        <div class="mem-fraction" style="color:${tot>ram?'var(--red)':'var(--text-muted)'}">${fmt(tot)} GB required · ${ram} GB available</div>
+      </div>
+      <div class="mem-track">
+        <div class="mem-seg ms-model"    style="width:${mP}%"></div>
+        <div class="mem-seg ms-kv"       style="width:${kP}%"></div>
+        <div class="mem-seg ms-overhead" style="width:${oP}%"></div>
+        ${tot>ram
+          ? `<div class="mem-seg ms-overflow" style="width:${xP}%"></div>`
+          : `<div class="mem-seg ms-free"     style="width:${fP}%"></div>`}
+      </div>
+      <div class="mem-legend">
+        <span class="leg"><span class="leg-dot ld-model"></span>Weights ${fmt(mGB)} GB</span>
+        <span class="leg"><span class="leg-dot ld-kv"></span>KV cache ${fmt(kGB)} GB</span>
+        <span class="leg"><span class="leg-dot ld-overhead"></span>Overhead ${fmt(oGB)} GB</span>
+        ${!tot>ram?`<span class="leg"><span class="leg-dot ld-free"></span>Free ${fmt(Math.max(0,ram-tot))} GB</span>`:''}
+      </div>
+    </div>`;
+  })() : '';
+
+  const ollama_cmd = m.ollama_tag ? `ollama run ${m.ollama_tag}` : null;
+
+  panel.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <div style="width:44px;height:44px;border-radius:10px;background:${co.bg};display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${co.emoji}</div>
+      <div>
+        <div style="font-size:18px;font-weight:700;letter-spacing:-.02em">${m.name}</div>
+        <div style="font-size:12px;color:var(--text-muted)">${co.name} · ${m.family} · ${m.params}B params · max ctx ${(m.ctx/1000).toFixed(0)}K</div>
+      </div>
+    </div>
+
+    ${verdictHTML}
+    ${barHTML}
+
+    <div class="breakdown">
+      <div class="bd-head">Calculation — ${state.quant.toUpperCase()} · ${ctxLabel(state.ctx)} context</div>
+      <div class="bd-row">
+        <div><div class="bd-label">Model weights</div><div class="bd-explain">${m.params}B × 10⁹ × ${bpw} bits ÷ 8 = bytes → GB</div></div>
+        <div class="bd-val">${fmt(mGB)} GB</div>
+      </div>
+      <div class="bd-row">
+        <div><div class="bd-label">KV cache</div><div class="bd-explain">${state.ctx.toLocaleString()} tokens × ${m.params}B × 0.5 MB/token/B</div></div>
+        <div class="bd-val">${fmt(kGB)} GB</div>
+      </div>
+      <div class="bd-row">
+        <div><div class="bd-label">Runtime overhead</div><div class="bd-explain">Activations, buffers, framework state</div></div>
+        <div class="bd-val">${fmt(oGB)} GB</div>
+      </div>
+      <div class="bd-row total">
+        <div class="bd-label" style="font-weight:600;color:var(--text)">Total required</div>
+        <div class="bd-val">${fmt(tot)} GB</div>
+      </div>
+      ${ram ? `
+      <div class="bd-row">
+        <div class="bd-label">Available</div>
+        <div class="bd-val">${ram} GB</div>
+      </div>
+      <div class="bd-row">
+        <div class="bd-label">${tot>ram?'Shortfall':'Headroom'}</div>
+        <div class="bd-val" style="color:${tot>ram?'var(--red)':'var(--green)'}">${tot>ram?'−':'+'}${fmt(Math.abs(ram-tot))} GB</div>
+      </div>` : ''}
+    </div>
+
+    <div class="dl-panel">
+      <div class="dl-title">Run it locally</div>
+      ${ollama_cmd ? `<div class="code-block">
+        <code>${ollama_cmd}</code>
+        <button class="copy-btn" onclick="copyCmd('${ollama_cmd}',this)">Copy</button>
+      </div>` : '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Not available on Ollama — download from HuggingFace below.</div>'}
+      <div class="dl-links">
+        <a class="dl-link" href="${m.dl}" target="_blank">⬇ Download model</a>
+        <a class="dl-link" href="https://ollama.com/library" target="_blank">📦 Ollama Library</a>
+        <a class="dl-link" href="https://lmstudio.ai" target="_blank">🖥 LM Studio</a>
+        <a class="dl-link" href="https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads" target="_blank">🤗 HuggingFace</a>
+      </div>
+    </div>
+  `;
+}
+
+function copyCmd(cmd, btn) {
+  navigator.clipboard.writeText(cmd).then(()=>{
+    btn.textContent = 'Copied!';
+    setTimeout(()=>btn.textContent='Copy', 1800);
+  });
+}
+
+// ── GRID RESULT ───────────────────────────────────────────────────────────
+function renderGrid(panel, models, ram) {
+  if (!models.length) {
+    panel.innerHTML = `<div class="empty-state">
+      <div class="empty-graphic">🤷</div>
+      <div class="empty-title">No models found</div>
+      <div class="empty-sub">Try selecting a different company or clearing the filter.</div>
+    </div>`;
+    return;
+  }
+
+  const co = state.company && COMPANIES[state.company];
+  const heading = co ? `${co.emoji} ${co.name} models` : 'All models';
+
+  const cards = models.map((m,i) => {
+    const tot = totalGB(m.params, state.quant, state.ctx);
+    const coM = COMPANIES[m.company]||{emoji:'?',color:'#888',bg:'#222'};
+    const v   = ram ? verdict(tot,ram) : '';
+    const statusHTML = ram ? `<span class="mc-status ${v}">${v==='run'?'✅ Fits':v==='warn'?'⚠️ Tight':'❌ Too big'}</span>` : '';
+    return `<div class="mcard" onclick="selectModel('${m.name.replace(/'/g,"\\'")}')">
+      <div class="mc-top">
+        <div class="mc-logo" style="background:${coM.bg}">${coM.emoji}</div>
+        <div style="flex:1;min-width:0">
+          <div class="mc-name">${m.name}</div>
+          <div class="mc-family">${coM.name} · ${m.family}</div>
+        </div>
+        ${statusHTML}
+      </div>
+      <div class="mc-params">${m.params}B params</div>
+      <div class="mc-mem">${state.quant.toUpperCase()} · ~${fmt(tot)} GB${ram?' / '+ram+' GB':''}</div>
+      <a class="mc-link" href="${m.dl}" target="_blank" onclick="event.stopPropagation()">⬇ Download ↗</a>
+    </div>`;
+  }).join('');
+
+  const ramNote = ram ? ` · ${ram} GB` : ' · select hardware to see compatibility';
+
+  panel.innerHTML = `
+    <div class="sec-head">${heading} — ${state.quant.toUpperCase()}${ramNote}</div>
+    <div class="models-grid">${cards}</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Click any card for full memory breakdown and download command.</div>
+  `;
+}
+
+// ── FALLBACK ──────────────────────────────────────────────────────────────
+const FALLBACK_MODELS = [
+  {company:'meta',name:'Llama 3.1 8B',params:8,family:'Llama 3.1',ctx:128000,dl:'https://ollama.com/library/llama3.1:8b',ollama_tag:'llama3.1:8b'},
+  {company:'meta',name:'Llama 3.1 70B',params:70,family:'Llama 3.1',ctx:128000,dl:'https://ollama.com/library/llama3.1:70b',ollama_tag:'llama3.1:70b'},
+  {company:'google',name:'Gemma 3 4B',params:4,family:'Gemma 3',ctx:128000,dl:'https://ollama.com/library/gemma3:4b',ollama_tag:'gemma3:4b'},
+  {company:'google',name:'Gemma 3 27B',params:27,family:'Gemma 3',ctx:128000,dl:'https://ollama.com/library/gemma3:27b',ollama_tag:'gemma3:27b'},
+  {company:'mistral',name:'Mistral 7B',params:7,family:'Mistral',ctx:32768,dl:'https://ollama.com/library/mistral:7b',ollama_tag:'mistral:7b'},
+  {company:'deepseek',name:'DeepSeek-R1 7B',params:7,family:'DeepSeek-R1',ctx:128000,dl:'https://ollama.com/library/deepseek-r1:7b',ollama_tag:'deepseek-r1:7b'},
+  {company:'microsoft',name:'Phi-4 14B',params:14,family:'Phi-4',ctx:16384,dl:'https://ollama.com/library/phi4',ollama_tag:'phi4'},
+  {company:'alibaba',name:'Qwen2.5 7B',params:7,family:'Qwen2.5',ctx:131072,dl:'https://ollama.com/library/qwen2.5:7b',ollama_tag:'qwen2.5:7b'},
+];
+
+boot();
+</script>
+</body>
+</html>
