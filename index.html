@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RunMyLLM.app — Will it run on your hardware?</title>
-<meta name="description" content="Instantly check if any local LLM model runs on your Mac, PC, or GPU. See exact memory breakdown, quantization options, and download links.">
-<meta property="og:title" content="RunMyLLM.app">
-<meta property="og:description" content="Will your LLM run on your laptop? Find out instantly.">
+<meta name="description" content="Check if any local LLM runs on your hardware. No cloud, no API keys — just download and run on your own machine.">
+<meta property="og:title" content="RunMyLLM.app — Will it run locally on your hardware?">
+<meta property="og:description" content="Instantly check which open-source LLMs run locally on your laptop or desktop. No subscriptions, no internet required.">
 <meta property="og:image" content="https://runmyllm.app/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -1077,7 +1077,7 @@ footer a:hover { color: var(--cyan); }
 
   <div class="hero-body">
     <div class="hero-text">
-      <h1>Will your LLM run<br>on <em>this</em> machine?</h1>
+      <h1>Will your LLM run<br>on <em>this</em> machine — locally?</h1>
       <p class="hero-sub">Pick any model, configure your hardware, and see exactly where the memory goes — in seconds.</p>
       <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.25);border-radius:8px;padding:7px 14px;margin-top:8px;font-size:12px;color:var(--green);font-weight:500">
         ✅ Only models you can download &amp; run on your own hardware — no subscriptions, no internet required
@@ -1388,7 +1388,18 @@ async function boot() {
 
   buildTicker();
   populateModels();
-  compute();
+
+  // Auto-detect mobile on load
+  if (isMobileDevice()) {
+    showMobileBlock();
+    // Update detect button to reflect mobile state
+    document.getElementById('detect-icon').textContent = '📱';
+    document.getElementById('detect-label').textContent = 'Mobile device detected — visit on PC/Mac';
+    document.getElementById('detect-btn').disabled = true;
+  } else {
+    compute();
+  }
+
   initTheme();
 }
 
@@ -1400,13 +1411,19 @@ async function detectHardware() {
   const label = document.getElementById('detect-label');
   const panel = document.getElementById('detect-result');
 
+  // Check mobile first before doing anything
+  if (isMobileDevice()) {
+    showMobileBlock();
+    return;
+  }
+
   // Loading state
   btn.disabled = true;
   icon.className = 'spin';
   icon.textContent = '⟳';
   label.textContent = 'Detecting…';
 
-  await new Promise(r => setTimeout(r, 600)); // let UI update
+  await new Promise(r => setTimeout(r, 600));
 
   try {
     const info = readHardwareInfo();
@@ -1421,6 +1438,61 @@ async function detectHardware() {
   icon.className = '';
   icon.textContent = '🔄';
   label.textContent = 'Re-detect hardware';
+}
+
+function isMobileDevice() {
+  const ua = navigator.userAgent;
+  return /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile/i.test(ua)
+    || (navigator.maxTouchPoints > 1 && /MacIntel/.test(navigator.platform) === false && window.innerWidth < 768);
+}
+
+function showMobileBlock() {
+  const panel = document.getElementById('right-panel');
+  panel.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:320px;text-align:center;gap:16px;padding:24px">
+      <div style="font-size:64px">📱</div>
+      <div style="font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.02em">You're on a mobile device</div>
+      <div style="font-size:14px;color:var(--text-muted);max-width:340px;line-height:1.7">
+        Local LLMs run on <strong style="color:var(--text)">laptops and desktops</strong> only — phones don't have enough RAM or the right CPU/GPU architecture to run these models.
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 24px;max-width:340px">
+        <div style="font-size:13px;font-weight:600;color:var(--text-dim);margin-bottom:10px">To check your hardware compatibility:</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.8">
+          🖥️ Open <strong style="color:var(--cyan)">runmyllm.app</strong> on your<br>Mac, Windows PC, or Linux machine
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
+        You can still browse all available models below ↓
+      </div>
+    </div>
+    <div style="padding:0 4px">
+      <div class="sec-head">Browse all local LLM models</div>
+      <div class="models-grid">
+        ${MODELS.map(m => {
+          const coM = COMPANIES[m.company]||{emoji:'?',color:'#888',bg:'#222'};
+          const tot = totalGB(m.params, state.quant, state.ctx);
+          return `<div class="mcard" onclick="selectModelMobile('${m.name.replace(/'/g,"\\'")}')">
+            <div class="mc-top">
+              <div class="mc-logo" style="background:${coM.bg}">${coM.emoji}</div>
+              <div style="flex:1;min-width:0">
+                <div class="mc-name">${m.name}</div>
+                <div class="mc-family">${coM.name}</div>
+              </div>
+            </div>
+            <div class="mc-params">${m.params}B params · ~${fmt(tot)} GB</div>
+            <a class="mc-link" href="${m.dl}" target="_blank" onclick="event.stopPropagation()">⬇ Download ↗</a>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+
+  // Also show a banner in detect result area
+  document.getElementById('detect-result').classList.add('show');
+  document.getElementById('dr-gpu').textContent      = 'Mobile device';
+  document.getElementById('dr-ram').textContent      = 'N/A';
+  document.getElementById('dr-platform').textContent = /iPhone|iPad/.test(navigator.userAgent) ? 'iOS' : 'Android';
+  document.getElementById('dr-warn').innerHTML       = '📱 Local LLMs require a laptop or desktop — visit on your PC or Mac.';
 }
 
 function readHardwareInfo() {
@@ -1621,6 +1693,12 @@ function toggleFailGroup() {
   const isOpen = el.style.display !== 'none';
   el.style.display = isOpen ? 'none' : 'block';
   chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+function selectModelMobile(name) {
+  const m = MODELS.find(x => x.name === name);
+  if (!m) return;
+  window.open(m.dl, '_blank');
 }
 
 function backToGrid() {
