@@ -1033,6 +1033,35 @@ footer a:hover { color: var(--cyan); }
   color: var(--text-muted);
 }
 
+/* FLOATING FEEDBACK BUTTON */
+.feedback-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: linear-gradient(135deg, #0077b5, #005e93);
+  color: white;
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 11px 18px;
+  border-radius: 25px;
+  text-decoration: none;
+  box-shadow: 0 4px 20px rgba(0,119,181,.4);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  z-index: 999;
+  transition: all .2s;
+  border: 1px solid rgba(255,255,255,.15);
+  white-space: nowrap;
+}
+.feedback-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0,119,181,.5);
+  background: linear-gradient(135deg, #0088cc, #0077b5);
+}
+.feedback-btn:active { transform: translateY(0); }
+
 /* GLOW LINES */
 .glow-line {
   position: absolute;
@@ -1284,6 +1313,11 @@ footer a:hover { color: var(--cyan); }
   </div>
 
 </div>
+
+<!-- FLOATING FEEDBACK BUTTON -->
+<a href="https://www.linkedin.com/in/abhiramsomayajula" target="_blank" class="feedback-btn" title="Send feedback or suggestions">
+  💬 Feedback / Suggestions
+</a>
 
 <!-- FOOTER -->
 <footer>
