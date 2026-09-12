@@ -1073,12 +1073,15 @@ footer a:hover { color: var(--cyan); }
 <!-- HERO -->
 <section class="hero">
   <div class="glow-line" style="top:0"></div>
-  <div class="hero-eyebrow">Local AI · Memory Calculator</div>
+  <div class="hero-eyebrow">🖥️ Local AI Only · No Cloud · No API Keys</div>
 
   <div class="hero-body">
     <div class="hero-text">
       <h1>Will your LLM run<br>on <em>this</em> machine?</h1>
       <p class="hero-sub">Pick any model, configure your hardware, and see exactly where the memory goes — in seconds.</p>
+      <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.25);border-radius:8px;padding:7px 14px;margin-top:8px;font-size:12px;color:var(--green);font-weight:500">
+        ✅ Only models you can download &amp; run on your own hardware — no subscriptions, no internet required
+      </div>
     </div>
 
     <!-- FUNKY VISITOR WIDGET -->
@@ -1295,14 +1298,20 @@ footer a:hover { color: var(--cyan); }
 <script>
 // ── COMPANY META ──────────────────────────────────────────────────────────
 const COMPANIES = {
-  meta:      { name: 'Meta',      emoji: '🦙', color: '#3b82f6', bg: '#1d2e5e' },
-  mistral:   { name: 'Mistral',   emoji: '🌊', color: '#f97316', bg: '#3d1f0a' },
-  google:    { name: 'Google',    emoji: '💎', color: '#ea4335', bg: '#3a100e' },
-  microsoft: { name: 'Microsoft', emoji: '⬡',  color: '#00a4ef', bg: '#003050' },
-  alibaba:   { name: 'Alibaba',   emoji: '🐉', color: '#ff6a00', bg: '#3d1a00' },
-  deepseek:  { name: 'DeepSeek',  emoji: '🔬', color: '#06b6d4', bg: '#032d38' },
-  cohere:    { name: 'Cohere',    emoji: '⌘',  color: '#a78bfa', bg: '#281a50' },
-  '01ai':    { name: '01.AI',     emoji: '一', color: '#d946ef', bg: '#2d0a38' },
+  meta:      { name: 'Meta',        emoji: '🦙', color: '#3b82f6', bg: '#1d2e5e' },
+  mistral:   { name: 'Mistral',     emoji: '🌊', color: '#f97316', bg: '#3d1f0a' },
+  google:    { name: 'Google',      emoji: '💎', color: '#ea4335', bg: '#3a100e' },
+  microsoft: { name: 'Microsoft',   emoji: '⬡',  color: '#00a4ef', bg: '#003050' },
+  alibaba:   { name: 'Alibaba',     emoji: '🐉', color: '#ff6a00', bg: '#3d1a00' },
+  deepseek:  { name: 'DeepSeek',    emoji: '🔬', color: '#06b6d4', bg: '#032d38' },
+  cohere:    { name: 'Cohere',      emoji: '⌘',  color: '#a78bfa', bg: '#281a50' },
+  '01ai':    { name: '01.AI',       emoji: '一', color: '#d946ef', bg: '#2d0a38' },
+  tii:       { name: 'TII (Falcon)',emoji: '🦅', color: '#10b981', bg: '#0a2e1e' },
+  stability: { name: 'Stability AI',emoji: '🎨', color: '#8b5cf6', bg: '#1e1040' },
+  allenai:   { name: 'Allen AI',    emoji: '🧠', color: '#f59e0b', bg: '#2d1f00' },
+  apple:     { name: 'Apple',       emoji: '🍎', color: '#94a3b8', bg: '#1e2430' },
+  lg:        { name: 'LG AI',       emoji: '⚡', color: '#ec4899', bg: '#2d0a28' },
+  community: { name: 'Community',   emoji: '🤝', color: '#34d399', bg: '#0a2e1e' },
 };
 
 const QUANT_BPW   = { fp16:16, q8:8, q4:4, q3:3, q2:2 };
