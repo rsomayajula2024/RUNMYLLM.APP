@@ -1170,11 +1170,12 @@ footer a:hover { color: var(--cyan); }
         </label>
         <select id="brand" onchange="onBrandChange()">
           <option value="">— Select brand —</option>
-          <option value="apple">Apple Silicon (M-series)</option>
-          <option value="nvidia">NVIDIA GPU</option>
-          <option value="amd">AMD GPU</option>
-          <option value="intel">Intel CPU / Arc GPU</option>
-          <option value="generic">CPU-only (any brand)</option>
+          <option value="generic">💻 CPU-only / No dedicated GPU (most common)</option>
+          <option value="nosure">🤷 I don't know / Not sure</option>
+          <option value="apple">🍎 Apple Silicon (M-series Mac)</option>
+          <option value="nvidia">🟢 NVIDIA GPU (GeForce / RTX / GTX)</option>
+          <option value="amd">🔴 AMD GPU (Radeon RX)</option>
+          <option value="intel">🔵 Intel CPU / Arc GPU</option>
         </select>
       </div>
       <div class="field">
@@ -1333,6 +1334,11 @@ const CHIPS = {
     {l:'M4',v:'m4'},{l:'M4 Pro',v:'m4pro'},{l:'M4 Max',v:'m4max'},
   ],
   nvidia: [
+    {l:'GT 710 / GT 730 (2GB) — display only',v:'gt710'},
+    {l:'GTX 1060 (6GB)',v:'gtx1060'},{l:'GTX 1070 (8GB)',v:'gtx1070'},
+    {l:'GTX 1080 Ti (11GB)',v:'gtx1080ti'},
+    {l:'RTX 2060 (6GB)',v:'rtx2060'},{l:'RTX 2070 (8GB)',v:'rtx2070'},
+    {l:'RTX 2080 Ti (11GB)',v:'rtx2080ti'},
     {l:'RTX 3060 (12GB)',v:'rtx3060'},{l:'RTX 3080 (10GB)',v:'rtx3080'},
     {l:'RTX 3090 (24GB)',v:'rtx3090'},{l:'RTX 4060 Ti (16GB)',v:'rtx4060ti'},
     {l:'RTX 4070 (12GB)',v:'rtx4070'},{l:'RTX 4070 Ti (12GB)',v:'rtx4070ti'},
@@ -1350,11 +1356,15 @@ const CHIPS = {
     {l:'Arc A770 (16GB)',v:'arca770'},{l:'Arc B580 (12GB)',v:'arcb580'},
   ],
   generic: [
-    {l:'CPU-only DDR4',v:'cpu_ddr4'},{l:'CPU-only DDR5',v:'cpu_ddr5'},
+    {l:'Intel / AMD — DDR4 RAM (most laptops & desktops)',v:'cpu_ddr4'},
+    {l:'Intel / AMD — DDR5 RAM (newer laptops & desktops)',v:'cpu_ddr5'},
+    {l:'GT 710 / display-only GPU — use system RAM',v:'cpu_ddr4'},
   ],
 };
 
 const VRAM_MAP = {
+  gt710:[2], gtx1060:[6], gtx1070:[8], gtx1080ti:[11],
+  rtx2060:[6], rtx2070:[8], rtx2080ti:[11],
   rtx3060:[12],rtx3080:[10],rtx3090:[24],rtx4060ti:[16],rtx4070:[12],rtx4070ti:[12],
   rtx4080:[16],rtx4090:[24],rtx5080:[16],rtx5090:[32],a100_40:[40],a100_80:[80],h100:[80],
   rx6700xt:[12],rx6800xt:[16],rx6900xt:[16],rx7600:[8],rx7900xtx:[24],rx9070xt:[16],
@@ -1829,10 +1839,43 @@ function setDevice(d) {
 function onBrandChange() {
   state.brand = document.getElementById('brand').value;
   state.chip = ''; state.ram = 0;
+
   const chipSel = document.getElementById('chip');
+  const ramSel  = document.getElementById('ram');
   chipSel.innerHTML = '<option value="">— Select chip —</option>';
+  ramSel.innerHTML  = '<option value="">— Select memory —</option>';
+
+  // "Not sure" path — skip chip entirely, just ask for RAM
+  if (state.brand === 'nosure') {
+    state.chip = 'cpu_ddr4'; // treat as CPU-only
+    chipSel.innerHTML = '<option value="cpu_ddr4" selected>CPU-only (auto-selected)</option>';
+
+    // Show helpful RAM picker with plain English
+    ramSel.innerHTML = '<option value="">— How much RAM do you have? —</option>';
+    [
+      { v:4,  l:'4 GB  — older or budget laptop' },
+      { v:8,  l:'8 GB  — standard laptop/desktop' },
+      { v:16, l:'16 GB — good laptop/desktop' },
+      { v:32, l:'32 GB — high-end desktop/workstation' },
+      { v:64, l:'64 GB — professional workstation' },
+    ].forEach(o => ramSel.appendChild(new Option(o.l, o.v)));
+
+    // Show a help tip
+    document.getElementById('detect-result').classList.add('show');
+    document.getElementById('dr-gpu').textContent      = 'No dedicated GPU / unknown';
+    document.getElementById('dr-ram').textContent      = 'Using system RAM for LLM inference';
+    document.getElementById('dr-platform').textContent = 'CPU-only';
+    document.getElementById('dr-warn').innerHTML       =
+      '💡 No GPU? No problem. LLMs run on your <strong style="color:var(--text)">CPU + system RAM</strong>. ' +
+      'Just pick your RAM size below.<br><br>' +
+      '<span style="font-size:11px;color:var(--text-muted)">To check RAM: ' +
+      '<strong>Windows</strong> → Task Manager → Performance → Memory &nbsp;|&nbsp; ' +
+      '<strong>Mac</strong> → About This Mac</span>';
+    compute(); return;
+  }
+
+  // Normal path
   (CHIPS[state.brand]||[]).forEach(c => chipSel.appendChild(new Option(c.l, c.v)));
-  document.getElementById('ram').innerHTML = '<option value="">— Select memory —</option>';
   compute();
 }
 
@@ -1842,6 +1885,19 @@ function onChipChange() {
   const ramSel = document.getElementById('ram');
   ramSel.innerHTML = '<option value="">— Select memory —</option>';
   if (!state.chip) { compute(); return; }
+
+  // Special case: display-only GPU — tell user to use system RAM
+  if (state.chip === 'gt710') {
+    document.getElementById('detect-result').classList.add('show');
+    document.getElementById('dr-gpu').textContent = 'GT 710 — display card only';
+    document.getElementById('dr-ram').textContent = 'Use system RAM instead';
+    document.getElementById('dr-platform').textContent = 'Windows';
+    document.getElementById('dr-warn').innerHTML = '⚠ The GT 710 cannot run LLMs. LLM inference will use your <strong style="color:var(--text)">system RAM via CPU</strong>. Select your total system RAM below.';
+    // Switch to CPU-only and populate with system RAM options
+    [8,16,32,64,128].forEach(gb => ramSel.appendChild(new Option(`${gb} GB system RAM`, gb)));
+    compute(); return;
+  }
+
   const opts = state.brand === 'apple' ? APPLE_RAM : (VRAM_MAP[state.chip]||[8,16,32]);
   opts.forEach(gb => ramSel.appendChild(new Option(`${gb} GB`, gb)));
   compute();
