@@ -1,33 +1,677 @@
 {
-  "last_updated": "2026-10-12",
-  "model_count": 3,
-  "models": [
-    {
-      "company": "meta",
-      "name": "Llama 3.1 405B",
-      "params": 405,
-      "family": "Llama 3.1",
-      "ctx": 128000,
-      "dl": "https://huggingface.co/meta-llama/Llama-3.1-405B",
-      "ollama_tag": "llama3.1:405b"
-    },
-    {
-      "company": "mistral",
-      "name": "Mistral Large 2",
-      "params": 123,
-      "family": "Mistral",
-      "ctx": 128000,
-      "dl": "https://huggingface.co/mistralai/Mistral-Large-Instruct-2407",
-      "ollama_tag": null
-    },
-    {
-      "company": "deepseek",
-      "name": "DeepSeek-V3 671B",
-      "params": 671,
-      "family": "DeepSeek-V3",
-      "ctx": 128000,
-      "dl": "https://huggingface.co/deepseek-ai/DeepSeek-V3",
-      "ollama_tag": null
-    }
-  ]
+ "last_updated": "2026-10-17",
+ "last_checked": "2026-10-17",
+ "model_count": 65,
+ "models": [
+  {
+   "company": "meta",
+   "name": "Llama 3.2 1B",
+   "family": "Llama 3.2",
+   "params": 1.2,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/llama3.2:1b",
+   "ollama_tag": "llama3.2:1b",
+   "released": "2024-09"
+  },
+  {
+   "company": "meta",
+   "name": "Llama 3.2 3B",
+   "family": "Llama 3.2",
+   "params": 3.2,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/llama3.2:3b",
+   "ollama_tag": "llama3.2:3b",
+   "released": "2024-09"
+  },
+  {
+   "company": "meta",
+   "name": "Llama 3.1 8B",
+   "family": "Llama 3.1",
+   "params": 8,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/llama3.1:8b",
+   "ollama_tag": "llama3.1:8b",
+   "released": "2024-07"
+  },
+  {
+   "company": "meta",
+   "name": "Llama 3.3 70B",
+   "family": "Llama 3.3",
+   "params": 70,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/llama3.3:70b",
+   "ollama_tag": "llama3.3:70b",
+   "released": "2024-12"
+  },
+  {
+   "company": "meta",
+   "name": "Llama 4 Scout 109B",
+   "family": "Llama 4",
+   "params": 109,
+   "active": 17,
+   "ctx": 10485760,
+   "dl": "https://ollama.com/library/llama4:16x17b",
+   "ollama_tag": "llama4:16x17b",
+   "released": "2025-04"
+  },
+  {
+   "company": "meta",
+   "name": "Muse Glimmer 30B",
+   "family": "Muse",
+   "params": 29.6,
+   "ctx": 131072,
+   "dl": "https://huggingface.co/meta-models/Muse-Glimmer-30B",
+   "ollama_tag": null,
+   "released": "2026-08"
+  },
+  {
+   "company": "meta",
+   "name": "Muse Spark Open 816B",
+   "family": "Muse",
+   "params": 816,
+   "active": 42,
+   "ctx": 1048576,
+   "dl": "https://huggingface.co/meta-models",
+   "ollama_tag": null,
+   "released": "2026-10"
+  },
+  {
+   "company": "google",
+   "name": "Gemma 3 4B",
+   "family": "Gemma 3",
+   "params": 4,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/gemma3:4b",
+   "ollama_tag": "gemma3:4b",
+   "released": "2025-03"
+  },
+  {
+   "company": "google",
+   "name": "Gemma 3 12B",
+   "family": "Gemma 3",
+   "params": 12,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/gemma3:12b",
+   "ollama_tag": "gemma3:12b",
+   "released": "2025-03"
+  },
+  {
+   "company": "google",
+   "name": "Gemma 3 27B",
+   "family": "Gemma 3",
+   "params": 27,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/gemma3:27b",
+   "ollama_tag": "gemma3:27b",
+   "released": "2025-03"
+  },
+  {
+   "company": "google",
+   "name": "Gemma 4 E2B",
+   "family": "Gemma 4",
+   "params": 5.1,
+   "active": 2,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/gemma4:e2b",
+   "ollama_tag": "gemma4:e2b",
+   "released": "2026-04"
+  },
+  {
+   "company": "google",
+   "name": "Gemma 4 E4B",
+   "family": "Gemma 4",
+   "params": 8,
+   "active": 4,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/gemma4:e4b",
+   "ollama_tag": "gemma4:e4b",
+   "released": "2026-04"
+  },
+  {
+   "company": "google",
+   "name": "Gemma 4 12B",
+   "family": "Gemma 4",
+   "params": 12,
+   "ctx": 262144,
+   "dl": "https://ollama.com/library/gemma4:12b",
+   "ollama_tag": "gemma4:12b",
+   "released": "2026-06"
+  },
+  {
+   "company": "google",
+   "name": "Gemma 4 26B A4B",
+   "family": "Gemma 4",
+   "params": 25.2,
+   "active": 3.8,
+   "ctx": 262144,
+   "dl": "https://ollama.com/library/gemma4:26b",
+   "ollama_tag": "gemma4:26b",
+   "released": "2026-04"
+  },
+  {
+   "company": "google",
+   "name": "Gemma 4 31B",
+   "family": "Gemma 4",
+   "params": 30.7,
+   "ctx": 262144,
+   "dl": "https://ollama.com/library/gemma4:31b",
+   "ollama_tag": "gemma4:31b",
+   "released": "2026-04"
+  },
+  {
+   "company": "alibaba",
+   "name": "Qwen3 4B",
+   "family": "Qwen3",
+   "params": 4,
+   "ctx": 40960,
+   "dl": "https://ollama.com/library/qwen3:4b",
+   "ollama_tag": "qwen3:4b",
+   "released": "2025-04"
+  },
+  {
+   "company": "alibaba",
+   "name": "Qwen3 8B",
+   "family": "Qwen3",
+   "params": 8,
+   "ctx": 40960,
+   "dl": "https://ollama.com/library/qwen3:8b",
+   "ollama_tag": "qwen3:8b",
+   "released": "2025-04"
+  },
+  {
+   "company": "alibaba",
+   "name": "Qwen3 14B",
+   "family": "Qwen3",
+   "params": 14,
+   "ctx": 40960,
+   "dl": "https://ollama.com/library/qwen3:14b",
+   "ollama_tag": "qwen3:14b",
+   "released": "2025-04"
+  },
+  {
+   "company": "alibaba",
+   "name": "Qwen3 30B A3B",
+   "family": "Qwen3",
+   "params": 30.5,
+   "active": 3.3,
+   "ctx": 262144,
+   "dl": "https://ollama.com/library/qwen3:30b",
+   "ollama_tag": "qwen3:30b",
+   "released": "2025-07"
+  },
+  {
+   "company": "alibaba",
+   "name": "Qwen3 32B",
+   "family": "Qwen3",
+   "params": 32,
+   "ctx": 40960,
+   "dl": "https://ollama.com/library/qwen3:32b",
+   "ollama_tag": "qwen3:32b",
+   "released": "2025-04"
+  },
+  {
+   "company": "alibaba",
+   "name": "Qwen3-Coder 30B A3B",
+   "family": "Qwen3-Coder",
+   "params": 30.5,
+   "active": 3.3,
+   "ctx": 262144,
+   "dl": "https://ollama.com/library/qwen3-coder:30b",
+   "ollama_tag": "qwen3-coder:30b",
+   "released": "2025-07"
+  },
+  {
+   "company": "alibaba",
+   "name": "Qwen3-VL 8B",
+   "family": "Qwen3-VL",
+   "params": 8,
+   "ctx": 262144,
+   "dl": "https://ollama.com/library/qwen3-vl:8b",
+   "ollama_tag": "qwen3-vl:8b",
+   "released": "2025-10"
+  },
+  {
+   "company": "alibaba",
+   "name": "Qwen3.5 0.8B",
+   "family": "Qwen3.5",
+   "params": 0.8,
+   "ctx": 262144,
+   "dl": "https://ollama.com/library/qwen3.5:0.8b",
+   "ollama_tag": "qwen3.5:0.8b",
+   "released": "2026-02"
+  },
+  {
+   "company": "alibaba",
+   "name": "Qwen3.5 9B",
+   "family": "Qwen3.5",
+   "params": 9,
+   "ctx": 262144,
+   "dl": "https://ollama.com/library/qwen3.5:9b",
+   "ollama_tag": "qwen3.5:9b",
+   "released": "2026-02"
+  },
+  {
+   "company": "alibaba",
+   "name": "Qwen3.5 27B",
+   "family": "Qwen3.5",
+   "params": 27,
+   "ctx": 262144,
+   "dl": "https://ollama.com/library/qwen3.5:27b",
+   "ollama_tag": "qwen3.5:27b",
+   "released": "2026-02"
+  },
+  {
+   "company": "alibaba",
+   "name": "Qwen3.5 122B",
+   "family": "Qwen3.5",
+   "params": 122,
+   "ctx": 262144,
+   "dl": "https://ollama.com/library/qwen3.5:122b",
+   "ollama_tag": "qwen3.5:122b",
+   "released": "2026-02"
+  },
+  {
+   "company": "alibaba",
+   "name": "Qwen3.6 27B",
+   "family": "Qwen3.6",
+   "params": 27,
+   "ctx": 262144,
+   "dl": "https://ollama.com/library/qwen3.6:27b",
+   "ollama_tag": "qwen3.6:27b",
+   "released": "2026-04"
+  },
+  {
+   "company": "alibaba",
+   "name": "Qwen3.6 35B A3B",
+   "family": "Qwen3.6",
+   "params": 35,
+   "active": 3,
+   "ctx": 262144,
+   "dl": "https://ollama.com/library/qwen3.6:35b",
+   "ollama_tag": "qwen3.6:35b",
+   "released": "2026-04"
+  },
+  {
+   "company": "alibaba",
+   "name": "Qwen3.8 27B",
+   "family": "Qwen3.8",
+   "params": 27.8,
+   "ctx": 262144,
+   "dl": "https://ollama.com/library/qwen3.8:27b",
+   "ollama_tag": "qwen3.8:27b",
+   "released": "2026-08"
+  },
+  {
+   "company": "alibaba",
+   "name": "Qwen3.8 Flash-Next 125B A6B",
+   "family": "Qwen3.8",
+   "params": 125,
+   "active": 6,
+   "ctx": 262144,
+   "dl": "https://ollama.com/library/qwen3.8-flash-next:125b-mlx",
+   "ollama_tag": "qwen3.8-flash-next:125b-mlx",
+   "released": "2026-09"
+  },
+  {
+   "company": "alibaba",
+   "name": "Qwen2.5-Coder 7B",
+   "family": "Qwen2.5-Coder",
+   "params": 7,
+   "ctx": 32768,
+   "dl": "https://ollama.com/library/qwen2.5-coder:7b",
+   "ollama_tag": "qwen2.5-coder:7b",
+   "released": "2024-11"
+  },
+  {
+   "company": "alibaba",
+   "name": "Qwen2.5-Coder 14B",
+   "family": "Qwen2.5-Coder",
+   "params": 14,
+   "ctx": 32768,
+   "dl": "https://ollama.com/library/qwen2.5-coder:14b",
+   "ollama_tag": "qwen2.5-coder:14b",
+   "released": "2024-11"
+  },
+  {
+   "company": "alibaba",
+   "name": "Qwen2.5-Coder 32B",
+   "family": "Qwen2.5-Coder",
+   "params": 32,
+   "ctx": 32768,
+   "dl": "https://ollama.com/library/qwen2.5-coder:32b",
+   "ollama_tag": "qwen2.5-coder:32b",
+   "released": "2024-11"
+  },
+  {
+   "company": "deepseek",
+   "name": "DeepSeek-R1 8B",
+   "family": "DeepSeek-R1",
+   "params": 8,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/deepseek-r1:8b",
+   "ollama_tag": "deepseek-r1:8b",
+   "released": "2025-05"
+  },
+  {
+   "company": "deepseek",
+   "name": "DeepSeek-R1 14B",
+   "family": "DeepSeek-R1",
+   "params": 14,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/deepseek-r1:14b",
+   "ollama_tag": "deepseek-r1:14b",
+   "released": "2025-01"
+  },
+  {
+   "company": "deepseek",
+   "name": "DeepSeek-R1 32B",
+   "family": "DeepSeek-R1",
+   "params": 32,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/deepseek-r1:32b",
+   "ollama_tag": "deepseek-r1:32b",
+   "released": "2025-01"
+  },
+  {
+   "company": "deepseek",
+   "name": "DeepSeek-R1 70B",
+   "family": "DeepSeek-R1",
+   "params": 70,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/deepseek-r1:70b",
+   "ollama_tag": "deepseek-r1:70b",
+   "released": "2025-01"
+  },
+  {
+   "company": "deepseek",
+   "name": "DeepSeek-Coder-V2 Lite 16B",
+   "family": "DeepSeek-Coder-V2",
+   "params": 16,
+   "active": 2.4,
+   "ctx": 163840,
+   "dl": "https://ollama.com/library/deepseek-coder-v2:16b",
+   "ollama_tag": "deepseek-coder-v2:16b",
+   "released": "2024-06"
+  },
+  {
+   "company": "deepseek",
+   "name": "DeepSeek-V4 Flash 284B",
+   "family": "DeepSeek-V4",
+   "params": 284,
+   "active": 13,
+   "ctx": 1048576,
+   "dl": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash",
+   "ollama_tag": null,
+   "released": "2026-04"
+  },
+  {
+   "company": "openai",
+   "name": "gpt-oss 20B",
+   "family": "gpt-oss",
+   "params": 21,
+   "active": 3.6,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/gpt-oss:20b",
+   "ollama_tag": "gpt-oss:20b",
+   "released": "2025-08"
+  },
+  {
+   "company": "openai",
+   "name": "gpt-oss 120B",
+   "family": "gpt-oss",
+   "params": 117,
+   "active": 5.1,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/gpt-oss:120b",
+   "ollama_tag": "gpt-oss:120b",
+   "released": "2025-08"
+  },
+  {
+   "company": "mistral",
+   "name": "Mistral Small 3.2 24B",
+   "family": "Mistral Small",
+   "params": 24,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/mistral-small3.2:24b",
+   "ollama_tag": "mistral-small3.2:24b",
+   "released": "2025-06"
+  },
+  {
+   "company": "mistral",
+   "name": "Magistral Small 24B",
+   "family": "Magistral",
+   "params": 24,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/magistral:24b",
+   "ollama_tag": "magistral:24b",
+   "released": "2025-06"
+  },
+  {
+   "company": "mistral",
+   "name": "Devstral Small 24B",
+   "family": "Devstral",
+   "params": 24,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/devstral:24b",
+   "ollama_tag": "devstral:24b",
+   "released": "2025-07"
+  },
+  {
+   "company": "mistral",
+   "name": "Codestral 22B",
+   "family": "Codestral",
+   "params": 22,
+   "ctx": 32768,
+   "dl": "https://ollama.com/library/codestral:22b",
+   "ollama_tag": "codestral:22b",
+   "released": "2024-05"
+  },
+  {
+   "company": "mistral",
+   "name": "Mistral Small 4 119B A6B",
+   "family": "Mistral Small",
+   "params": 119,
+   "active": 6,
+   "ctx": 262144,
+   "dl": "https://huggingface.co/mistralai",
+   "ollama_tag": null,
+   "released": "2026-03"
+  },
+  {
+   "company": "microsoft",
+   "name": "Phi-4 Mini 3.8B",
+   "family": "Phi-4",
+   "params": 3.8,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/phi4-mini",
+   "ollama_tag": "phi4-mini",
+   "released": "2025-02"
+  },
+  {
+   "company": "microsoft",
+   "name": "Phi-4 14B",
+   "family": "Phi-4",
+   "params": 14,
+   "ctx": 16384,
+   "dl": "https://ollama.com/library/phi4:14b",
+   "ollama_tag": "phi4:14b",
+   "released": "2024-12"
+  },
+  {
+   "company": "microsoft",
+   "name": "Phi-4 Reasoning 14B",
+   "family": "Phi-4",
+   "params": 14,
+   "ctx": 32768,
+   "dl": "https://ollama.com/library/phi4-reasoning:14b",
+   "ollama_tag": "phi4-reasoning:14b",
+   "released": "2025-04"
+  },
+  {
+   "company": "nvidia",
+   "name": "Nemotron 3.5 Lightning 30B A3B",
+   "family": "Nemotron 3.5",
+   "params": 30,
+   "active": 3,
+   "ctx": 1048576,
+   "dl": "https://ollama.com/library/nemotron-3.5-lightning:30b",
+   "ollama_tag": "nemotron-3.5-lightning:30b",
+   "released": "2026-09"
+  },
+  {
+   "company": "nvidia",
+   "name": "Nemotron 3.5 Bolt 74B A9B",
+   "family": "Nemotron 3.5",
+   "params": 74,
+   "active": 9,
+   "ctx": 262144,
+   "dl": "https://ollama.com/library/nemotron-3.5-bolt:74b-a9b",
+   "ollama_tag": "nemotron-3.5-bolt:74b-a9b",
+   "released": "2026-10"
+  },
+  {
+   "company": "nvidia",
+   "name": "Nemotron 3.5 Super 120B A12B",
+   "family": "Nemotron 3.5",
+   "params": 120,
+   "active": 12,
+   "ctx": 1048576,
+   "dl": "https://ollama.com/library/nemotron-3.5-super:120b",
+   "ollama_tag": "nemotron-3.5-super:120b",
+   "released": "2026-10"
+  },
+  {
+   "company": "zai",
+   "name": "GLM-4.7 Flash 30B",
+   "family": "GLM",
+   "params": 30,
+   "active": 3,
+   "ctx": 200000,
+   "dl": "https://ollama.com/library/glm-4.7-flash",
+   "ollama_tag": "glm-4.7-flash",
+   "released": "2026-01"
+  },
+  {
+   "company": "ibm",
+   "name": "Granite 4.2 3B",
+   "family": "Granite",
+   "params": 3,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/granite4.2:3b",
+   "ollama_tag": "granite4.2:3b",
+   "released": "2026-09"
+  },
+  {
+   "company": "ibm",
+   "name": "Granite 4.2 8B",
+   "family": "Granite",
+   "params": 8,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/granite4.2:8b",
+   "ollama_tag": "granite4.2:8b",
+   "released": "2026-09"
+  },
+  {
+   "company": "ibm",
+   "name": "Granite 4.0 H-Small 32B A9B",
+   "family": "Granite",
+   "params": 32,
+   "active": 9,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/granite4:32b-a9b-h",
+   "ollama_tag": "granite4:32b-a9b-h",
+   "released": "2025-10"
+  },
+  {
+   "company": "liquid",
+   "name": "LFM2.5 24B A2B",
+   "family": "LFM2.5",
+   "params": 24,
+   "active": 2,
+   "ctx": 32768,
+   "dl": "https://huggingface.co/LiquidAI",
+   "ollama_tag": null,
+   "released": "2026-10"
+  },
+  {
+   "company": "cohere",
+   "name": "Command R7B",
+   "family": "Command",
+   "params": 7,
+   "ctx": 131072,
+   "dl": "https://ollama.com/library/command-r7b",
+   "ollama_tag": "command-r7b",
+   "released": "2024-12"
+  },
+  {
+   "company": "cohere",
+   "name": "Command A 111B",
+   "family": "Command",
+   "params": 111,
+   "ctx": 262144,
+   "dl": "https://ollama.com/library/command-a",
+   "ollama_tag": "command-a",
+   "released": "2025-03"
+  },
+  {
+   "company": "lg",
+   "name": "EXAONE 3.5 2.4B",
+   "family": "EXAONE 3.5",
+   "params": 2.4,
+   "ctx": 32768,
+   "dl": "https://ollama.com/library/exaone3.5:2.4b",
+   "ollama_tag": "exaone3.5:2.4b",
+   "released": "2024-12"
+  },
+  {
+   "company": "lg",
+   "name": "EXAONE 3.5 7.8B",
+   "family": "EXAONE 3.5",
+   "params": 7.8,
+   "ctx": 32768,
+   "dl": "https://ollama.com/library/exaone3.5:7.8b",
+   "ollama_tag": "exaone3.5:7.8b",
+   "released": "2024-12"
+  },
+  {
+   "company": "lg",
+   "name": "EXAONE 4.0 32B",
+   "family": "EXAONE 4.0",
+   "params": 32,
+   "ctx": 131072,
+   "dl": "https://huggingface.co/LGAI-EXAONE",
+   "ollama_tag": null,
+   "released": "2025-07"
+  },
+  {
+   "company": "allenai",
+   "name": "OLMo 2 7B",
+   "family": "OLMo 2",
+   "params": 7,
+   "ctx": 4096,
+   "dl": "https://ollama.com/library/olmo2:7b",
+   "ollama_tag": "olmo2:7b",
+   "released": "2024-11"
+  },
+  {
+   "company": "allenai",
+   "name": "OLMo 2 13B",
+   "family": "OLMo 2",
+   "params": 13,
+   "ctx": 4096,
+   "dl": "https://ollama.com/library/olmo2:13b",
+   "ollama_tag": "olmo2:13b",
+   "released": "2024-11"
+  },
+  {
+   "company": "allenai",
+   "name": "OLMo 3 32B",
+   "family": "OLMo 3",
+   "params": 32,
+   "ctx": 65536,
+   "dl": "https://huggingface.co/allenai",
+   "ollama_tag": null,
+   "released": "2025-11"
+  }
+ ]
 }

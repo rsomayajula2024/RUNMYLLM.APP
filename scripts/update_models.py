@@ -1,231 +1,162 @@
 #!/usr/bin/env python3
 """
-RunMyLLM.app — Weekly model updater
-Runs via GitHub Actions every Monday. Fetches latest models from
-Ollama library and merges with curated list, writes data/models.json.
+RunMyLLM.app — weekly model updater (GitHub Actions, every Monday).
+
+data/models.json is the hand-curated source of truth. This script:
+  1. loads it,
+  2. scrapes ollama.com's "newest" + "popular" pages for new sizes of
+     families we already track and adds them (flagged "auto": true),
+  3. lists brand-new families it saw but doesn't know, in the job summary,
+     so a human can curate them,
+  4. writes last_checked every run; bumps last_updated only when the
+     model list actually changed.
+
+Safety rules (the old script broke these and wiped the site to 3 models):
+  * it NEVER removes models,
+  * if the network/parse fails it changes nothing but last_checked,
+  * it refuses to write a list smaller than the one it loaded.
 """
 
 import json
+import os
+import re
+import sys
 import urllib.request
-import urllib.error
 from datetime import date
 from pathlib import Path
 
-# ── CURATED BASE LIST ─────────────────────────────────────────────────────
-# Hand-curated entries for models NOT on Ollama (HuggingFace-only, etc.)
-CURATED_EXTRA = [
-    {
-        "company": "meta",
-        "name": "Llama 3.1 405B",
-        "params": 405,
-        "family": "Llama 3.1",
-        "ctx": 128000,
-        "dl": "https://huggingface.co/meta-llama/Llama-3.1-405B",
-        "ollama_tag": "llama3.1:405b"
-    },
-    {
-        "company": "mistral",
-        "name": "Mistral Large 2",
-        "params": 123,
-        "family": "Mistral",
-        "ctx": 128000,
-        "dl": "https://huggingface.co/mistralai/Mistral-Large-Instruct-2407",
-        "ollama_tag": None
-    },
-    {
-        "company": "deepseek",
-        "name": "DeepSeek-V3 671B",
-        "params": 671,
-        "family": "DeepSeek-V3",
-        "ctx": 128000,
-        "dl": "https://huggingface.co/deepseek-ai/DeepSeek-V3",
-        "ollama_tag": None
-    },
+DATA = Path(__file__).resolve().parent.parent / "data" / "models.json"
+PAGES = [
+    "https://ollama.com/search?o=newest",
+    "https://ollama.com/search?o=popular",
 ]
 
-# Company routing — map Ollama model namespace prefixes to our company keys
-COMPANY_MAP = {
-    "llama":        "meta",
-    "llama2":       "meta",
-    "llama3":       "meta",
-    "mistral":      "mistral",
-    "mixtral":      "mistral",
-    "mistral-small": "mistral",
-    "gemma":        "google",
-    "gemma2":       "google",
-    "gemma3":       "google",
-    "phi":          "microsoft",
-    "phi3":         "microsoft",
-    "phi4":         "microsoft",
-    "phi4-mini":    "microsoft",
-    "qwen":         "alibaba",
-    "qwen2":        "alibaba",
-    "qwen2.5":      "alibaba",
-    "qwq":          "alibaba",
-    "deepseek":     "deepseek",
-    "deepseek-r1":  "deepseek",
-    "deepseek-v3":  "deepseek",
-    "command-r":    "cohere",
-    "yi":           "01ai",
+# Ollama base name -> (company key, display family, default ctx)
+# Only families listed here are auto-extended. Add a line to track a new family.
+KNOWN = {
+    "llama3.1": ("meta", "Llama 3.1", 131072), "llama3.2": ("meta", "Llama 3.2", 131072),
+    "llama3.3": ("meta", "Llama 3.3", 131072),
+    "gemma3": ("google", "Gemma 3", 131072), "gemma4": ("google", "Gemma 4", 262144),
+    "qwen3": ("alibaba", "Qwen3", 40960), "qwen3.5": ("alibaba", "Qwen3.5", 262144),
+    "qwen3.6": ("alibaba", "Qwen3.6", 262144), "qwen3.8": ("alibaba", "Qwen3.8", 262144),
+    "qwen3-coder": ("alibaba", "Qwen3-Coder", 262144), "qwen3-vl": ("alibaba", "Qwen3-VL", 262144),
+    "qwen2.5-coder": ("alibaba", "Qwen2.5-Coder", 32768),
+    "deepseek-r1": ("deepseek", "DeepSeek-R1", 131072),
+    "gpt-oss": ("openai", "gpt-oss", 131072),
+    "mistral-small3.2": ("mistral", "Mistral Small", 131072), "magistral": ("mistral", "Magistral", 131072),
+    "devstral": ("mistral", "Devstral", 131072),
+    "phi4": ("microsoft", "Phi-4", 16384), "phi4-reasoning": ("microsoft", "Phi-4", 32768),
+    "nemotron-3.5-lightning": ("nvidia", "Nemotron 3.5", 1048576),
+    "nemotron-3.5-bolt": ("nvidia", "Nemotron 3.5", 262144),
+    "nemotron-3.5-super": ("nvidia", "Nemotron 3.5", 1048576),
+    "granite4.2": ("ibm", "Granite", 131072),
+    "exaone3.5": ("lg", "EXAONE 3.5", 32768), "olmo2": ("allenai", "OLMo 2", 4096),
 }
 
-FAMILY_MAP = {
-    "llama3.2": "Llama 3.2", "llama3.1": "Llama 3.1", "llama3": "Llama 3",
-    "llama2": "Llama 2", "mistral": "Mistral", "mixtral": "Mixtral",
-    "mistral-small3.1": "Mistral", "gemma2": "Gemma 2", "gemma3": "Gemma 3",
-    "phi3": "Phi-3", "phi4": "Phi-4", "phi4-mini": "Phi-4",
-    "qwen2": "Qwen2", "qwen2.5": "Qwen2.5", "qwq": "QwQ",
-    "deepseek-r1": "DeepSeek-R1", "command-r": "Command R",
-    "command-r-plus": "Command R+", "yi": "Yi",
-}
+# Families that are not chat LLMs (embeddings, decision models) — never report them.
+IGNORE = re.compile(r"embed|rerank|decider|clef|nimble|tev1|^d1$|guard|bge|minilm")
 
-SUPPORTED_PREFIXES = set(COMPANY_MAP.keys())
+SIZE_RE = re.compile(r"^(\d+(?:\.\d+)?)([mb])$")
 
 
-def fetch_ollama_models():
-    """Fetch model list from Ollama's public search API."""
-    url = "https://ollama.com/api/tags"
-    # Ollama doesn't have a clean public API for listing all models,
-    # so we query their search endpoint which returns popular models.
-    # Fallback: use their library search with empty query.
-    try:
-        req = urllib.request.Request(
-            "https://ollama.com/search?q=&sort=popular&limit=200",
-            headers={"Accept": "application/json", "User-Agent": "runmyllm-updater/1.0"}
-        )
-        # Note: Ollama's search returns HTML; we use their JSON-LD or parse
-        # their /api/models endpoint instead
-        api_url = "https://ollama.com/api/models?sort=popular&limit=200"
-        req2 = urllib.request.Request(
-            api_url,
-            headers={"Accept": "application/json", "User-Agent": "runmyllm-updater/1.0"}
-        )
-        with urllib.request.urlopen(req2, timeout=15) as resp:
-            data = json.loads(resp.read().decode())
-            return data.get("models", [])
-    except Exception as e:
-        print(f"⚠ Ollama API fetch failed: {e}. Using curated list only.")
-        return []
+def fetch(url):
+    req = urllib.request.Request(url, headers={"User-Agent": "runmyllm-updater/2.0"})
+    with urllib.request.urlopen(req, timeout=20) as r:
+        return r.read().decode("utf-8", "replace")
 
 
-def parse_params(name_str):
-    """Extract param count in billions from model name string like 'llama3:8b'."""
-    import re
-    # Match patterns: 8b, 70b, 0.5b, 8x7b (MoE), 671b
-    moe = re.search(r'(\d+)x(\d+)b', name_str.lower())
-    if moe:
-        # For MoE, active params ~ total params (conservative)
-        return int(moe.group(1)) * int(moe.group(2))
-    single = re.search(r'(\d+(?:\.\d+)?)b', name_str.lower())
-    if single:
-        return float(single.group(1))
-    return None
+def parse_search_html(html):
+    """Return {family: [size tags]} from an ollama.com search page.
+    Each result is an <li x-test-model ...> containing href="/library/<name>"
+    and <span x-test-size ...>8b</span> chips. Cloud-only results have no size chips."""
+    out = {}
+    for block in re.split(r"<li[^>]*\bx-test-model\b", html)[1:]:
+        m = re.search(r'href="/library/([a-z0-9._-]+)"', block)
+        if not m:
+            continue
+        sizes = re.findall(r"x-test-size[^>]*>\s*([^<\s]+)\s*<", block)
+        out[m.group(1)] = [s.lower() for s in sizes]
+    return out
 
 
-def resolve_company(model_name):
-    name_lower = model_name.lower().replace("_", "-")
-    for prefix, company in sorted(COMPANY_MAP.items(), key=lambda x: -len(x[0])):
-        if name_lower.startswith(prefix.lower()):
-            return company
-    return None
-
-
-def resolve_family(tag):
-    tag_lower = tag.lower().split(":")[0]
-    for key, family in sorted(FAMILY_MAP.items(), key=lambda x: -len(x[0])):
-        if tag_lower.startswith(key.lower()):
-            return family
-    return tag_lower.title()
-
-
-def build_model_entry(ollama_model):
-    """Convert an Ollama API model record to our schema."""
-    tag = ollama_model.get("name", "")
-    name_part = tag.split(":")[0]
-    size_part = tag.split(":")[1] if ":" in tag else ""
-
-    company = resolve_company(name_part)
-    if not company:
+def size_to_b(tag):
+    m = SIZE_RE.match(tag)
+    if not m:
         return None
-
-    params = parse_params(size_part) or parse_params(name_part)
-    if not params:
-        return None
-
-    family = resolve_family(name_part)
-    display_name = f"{family} {size_part.upper()}" if size_part else family
-
-    # ctx: use pull_count or description hints; default by size
-    ctx = 128000 if params <= 70 else 32768
-
-    return {
-        "company": company,
-        "name": display_name,
-        "params": params,
-        "family": family,
-        "ctx": ctx,
-        "dl": f"https://ollama.com/library/{tag}",
-        "ollama_tag": tag,
-        "pulls": ollama_model.get("pull_count", 0),
-    }
+    n = float(m.group(1))
+    return round(n / 1000, 3) if m.group(2) == "m" else n
 
 
-def dedupe(models):
-    """Remove duplicates by (company, name), keeping higher pull count."""
-    seen = {}
-    for m in models:
-        key = (m["company"], m["name"])
-        if key not in seen or m.get("pulls", 0) > seen[key].get("pulls", 0):
-            seen[key] = m
-    return list(seen.values())
-
-
-def sort_models(models):
-    company_order = ["meta", "google", "mistral", "microsoft", "alibaba", "deepseek", "cohere", "01ai"]
-    def sort_key(m):
-        co = company_order.index(m["company"]) if m["company"] in company_order else 99
-        return (co, m["params"])
-    return sorted(models, key=sort_key)
+def summary(lines):
+    path = os.environ.get("GITHUB_STEP_SUMMARY")
+    text = "\n".join(lines) + "\n"
+    print(text)
+    if path:
+        with open(path, "a") as f:
+            f.write(text)
 
 
 def main():
-    print("🔄 RunMyLLM model updater starting...")
+    data = json.loads(DATA.read_text())
+    models = data["models"]
+    before = len(models)
+    have_tags = {m.get("ollama_tag") for m in models if m.get("ollama_tag")}
+    have_names = {m["name"] for m in models}
+    today = date.today().isoformat()
 
-    # 1. Fetch from Ollama
-    raw_ollama = fetch_ollama_models()
-    print(f"  Fetched {len(raw_ollama)} models from Ollama API")
+    seen = {}
+    for url in PAGES:
+        try:
+            for fam, sizes in parse_search_html(fetch(url)).items():
+                seen.setdefault(fam, set()).update(sizes)
+        except Exception as e:  # network or layout change: report, don't break
+            print(f"warning: could not read {url}: {e}")
 
-    # 2. Parse
-    parsed = []
-    for m in raw_ollama:
-        entry = build_model_entry(m)
-        if entry:
-            parsed.append(entry)
-    print(f"  Parsed {len(parsed)} valid entries")
+    if not seen:
+        # Fail the job (GitHub emails you) and leave models.json untouched.
+        summary([f"## RunMyLLM model check — {today}",
+                 "❌ Could not read ollama.com (network or page layout changed). Nothing was changed."])
+        sys.exit(1)
 
-    # 3. Merge with curated extras
-    all_models = parsed + CURATED_EXTRA
-    all_models = dedupe(all_models)
-    all_models = sort_models(all_models)
+    added, unknown = [], []
+    for fam, sizes in sorted(seen.items()):
+        if fam not in KNOWN:
+            if sizes and not IGNORE.search(fam):
+                unknown.append(f"{fam} ({', '.join(sorted(sizes))})")
+            continue
+        company, family, ctx = KNOWN[fam]
+        for s in sorted(sizes):
+            params = size_to_b(s)
+            tag = f"{fam}:{s}"
+            name = f"{family} {s.upper()}"
+            if params is None or tag in have_tags or name in have_names:
+                continue
+            models.append({
+                "company": company, "name": name, "family": family, "params": params,
+                "ctx": ctx, "dl": f"https://ollama.com/library/{tag}",
+                "ollama_tag": tag, "released": today[:7], "auto": True,
+            })
+            have_tags.add(tag); have_names.add(name)
+            added.append(tag)
 
-    # 4. Remove pull count from output (internal only)
-    for m in all_models:
-        m.pop("pulls", None)
+    if len(models) < before:  # belt and braces — must never happen
+        sys.exit("refusing to write: model list shrank")
 
-    # 5. Write
-    output = {
-        "last_updated": date.today().isoformat(),
-        "model_count": len(all_models),
-        "models": all_models
-    }
+    data["last_checked"] = today
+    if added:
+        data["last_updated"] = today
+    data["model_count"] = len(models)
+    DATA.write_text(json.dumps(data, indent=1) + "\n")
 
-    out_path = Path(__file__).parent.parent / "data" / "models.json"
-    out_path.parent.mkdir(exist_ok=True)
-    with open(out_path, "w") as f:
-        json.dump(output, f, indent=2)
-
-    print(f"✅ Written {len(all_models)} models to {out_path}")
-    print(f"   Last updated: {output['last_updated']}")
+    lines = [f"## RunMyLLM model check — {today}",
+             f"- Ollama families read: **{len(seen)}**",
+             f"- Models: {before} → **{len(models)}**"]
+    if added:
+        lines.append("- Added: " + ", ".join(f"`{t}`" for t in added))
+    if unknown:
+        lines.append("\n### New families not tracked yet (add to KNOWN + models.json if worth listing)")
+        lines += [f"- {u}" for u in unknown[:40]]
+    summary(lines)
 
 
 if __name__ == "__main__":

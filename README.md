@@ -8,13 +8,16 @@
 
 ## What it does
 
-- Supports 40+ models across Meta, Mistral, Google, Microsoft, Alibaba, DeepSeek, Cohere, 01.AI
+- 65 local models (Oct 2026) across Meta, Google, Alibaba/Qwen, DeepSeek, OpenAI, Mistral, Microsoft, NVIDIA, Z.ai, IBM, Liquid, Cohere, LG, Allen AI
 - Hardware coverage: Apple M-series, NVIDIA, AMD, Intel Arc, CPU-only
 - Shows exact memory breakdown: weights + KV cache + overhead
 - Quantization options: FP16, Q8, Q4, Q3, Q2
-- Context length slider (512 → 32K tokens)
+- Context length slider (512 → 128K tokens)
 - Direct Ollama run commands with one-click copy
-- **Auto-updates weekly** via GitHub Actions
+- **Weekly auto-check** via GitHub Actions: `data/models.json` is hand-curated; every Monday the
+  updater scrapes ollama.com and adds new sizes of tracked families. It never removes models,
+  and fails loudly (GitHub email) instead of writing anything if ollama.com can't be read.
+  New untracked families are listed in the Action's run summary for manual curation.
 
 ---
 
@@ -26,7 +29,7 @@ runmyllm/
 ├── data/
 │   └── models.json                # Model list — updated weekly automatically
 ├── scripts/
-│   └── update_models.py           # Fetches latest models from Ollama + HuggingFace
+│   └── update_models.py           # Weekly check: adds new Ollama sizes, never removes
 ├── .github/
 │   └── workflows/
 │       └── update-models.yml      # Runs every Monday 06:00 UTC
