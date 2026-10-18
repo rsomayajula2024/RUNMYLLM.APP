@@ -54,7 +54,7 @@ KNOWN = {
 }
 
 # Families that are not chat LLMs (embeddings, decision models) — never report them.
-IGNORE = re.compile(r"embed|rerank|decider|clef|nimble|tev1|^d1$|guard|bge|minilm")
+IGNORE = re.compile(r"embed|rerank|decider|clef|nimble|tev1|^d1|guard|bge|minilm")
 
 SIZE_RE = re.compile(r"^(\d+(?:\.\d+)?)([mb])$")
 
@@ -65,17 +65,22 @@ def fetch(url):
         return r.read().decode("utf-8", "replace")
 
 
+# A size chip as ollama.com renders it: "8b", "0.6b", "270m", "e4b", "16x17b", "74b-a9b".
+# Lowercase only — download counts are rendered uppercase ("120.3M") and must not match.
+SIZE_CHIP = re.compile(r"^(e?\d+(?:\.\d+)?[mb](?:-a\d+(?:\.\d+)?b)?|\d+x\d+b)$")
+
+
 def parse_search_html(html):
     """Return {family: [size tags]} from an ollama.com search page.
-    Each result is an <li x-test-model ...> containing href="/library/<name>"
-    and <span x-test-size ...>8b</span> chips. Cloud-only results have no size chips."""
+    Each result is an <li> containing <a href="/library/<name>"> and one <span> per size.
+    Cloud-only results have no size chips."""
     out = {}
-    for block in re.split(r"<li[^>]*\bx-test-model\b", html)[1:]:
+    for block in re.split(r"<li\b", html)[1:]:
         m = re.search(r'href="/library/([a-z0-9._-]+)"', block)
         if not m:
             continue
-        sizes = re.findall(r"x-test-size[^>]*>\s*([^<\s]+)\s*<", block)
-        out[m.group(1)] = [s.lower() for s in sizes]
+        texts = re.findall(r"<span[^>]*>\s*([^<\s]{1,20})\s*</span>", block)
+        out[m.group(1)] = [t for t in texts if SIZE_CHIP.match(t)]
     return out
 
 
